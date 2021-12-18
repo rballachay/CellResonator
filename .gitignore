@@ -3,5 +3,7 @@
 /Background
 /Pipeline_v1.0
 /Pipeline_v2.0
+/__pycache__
+*.DS_Store
 
 
