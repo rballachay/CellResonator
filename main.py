@@ -6,8 +6,8 @@ Created on Tue Dec  7 18:42:09 2021
 @author: RileyBallachay
 """
 
-from image_processing_pipeline import ResonatorPipeline
-from histogram_pipeline import HistogramPipeline
+from src.image_processing_pipeline import ResonatorPipeline
+from src.histogram_pipeline import HistogramPipeline
 
 def main(inlet):    
     outlet = "/".join(inlet.split("/")[:-2]) + "/Outlet/" + inlet.split("/")[-1]
