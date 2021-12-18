@@ -5,8 +5,9 @@ Created on Sun Jun 13 12:08:37 2021
 
 @author: RileyBallachay
 """
-
+import os
 import cv2
+import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -21,19 +22,25 @@ class ResonatorPipeline:
     def __init__(self,inFolder,outFolder):
         self.inlet = inFolder
         self.outlet = outFolder
-        self.basis = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Pipeline/Basis'
+        self.create_outlet(outFolder)
+        self.basis = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Pipeline_v2.0/Basis'
     
+    def run(self):
         self.prepare_registration()
-        self.grab_background()
-        self.pipeline_main()
+        sliced = self.pipeline_main()
+        return sliced
         
+    def get_video(self,path):
+        video = glob.glob(path+"/*.mp4")[0]
+        return video
+    
     def prepare_registration(self):
         # Grab the first frame from our reference photo
-        vid_basis = self.basis+'/background.mp4'
+        vid_basis = self.get_video(self.basis)
         vidcap = cv2.VideoCapture(vid_basis)
         success,image_basis = vidcap.read()  
         
-        vid_new = self.inlet + '/background.mp4'
+        vid_new = self.get_video(self.inlet)
         vidcap = cv2.VideoCapture(vid_new)
         success,image_new = vidcap.read() 
         
@@ -117,7 +124,12 @@ class ResonatorPipeline:
         result = np.cumsum(myArray, 0)[N-1::N]/float(N)
         result[1:] = result[1:] - result[:-1]
         return result
-        
+     
+    def create_outlet(self,directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        return
+            
     def hist_normalization(self,img, a=0, b=255):
         c = img.min()
         d = img.max()
@@ -132,17 +144,16 @@ class ResonatorPipeline:
         return out
 
     def pipeline_main(self):
-        X = 366; Y= 104; W=273; H= 521
-        
+        #X=977;Y= 275;W= 212;H= 512
+        X=940;Y= 307;W= 249;H= 306
         # Initialize frame counter
         cnt = 0
-        cap = cv2.VideoCapture(self.inlet+'/main.mp4')
+        cap = cv2.VideoCapture(self.get_video(self.inlet))
         # Some characteristics from the original video
         w_frame, h_frame = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
         
         time_per_frame = 1/fps
-        print(frames)
         
         # output
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -164,7 +175,7 @@ class ResonatorPipeline:
                 
                 # Croping the frame
                 #frame = self.hist_normalization(frame)
-                frame = cv2.subtract(frame,self.back_to_sub)
+                #frame = cv2.subtract(frame,self.back_to_sub)
                 frame = cv2.warpPerspective(frame, self.homography, (self.width, self.height))
                 crop_frame = frame[Y:Y+H, X:X+W]
 
@@ -177,12 +188,14 @@ class ResonatorPipeline:
                 slices.append(imageGREY)
             
                 # Saving from the desired frames
+                """
                 font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX
                 crop_frame = cv2.putText(crop_frame, printtime,
                                     (10, 50),
                                     font, 1,
                                     (255, 255, 255), 
                                     2, cv2.LINE_8)
+                """
                 
                 # I see the answer now. Here you save all the video
                 out.write(crop_frame)
@@ -195,9 +208,5 @@ class ResonatorPipeline:
         
         cap.release()
         out.release()
+        return self.outlet+'/sliced.csv'
         
-        
-inlet = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Pipeline/Inlet/May 10'
-outlet = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Pipeline/Outlet/May 10'       
-        
-pipeline=ResonatorPipeline(inlet, outlet)
