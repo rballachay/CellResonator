@@ -89,7 +89,7 @@ class HistogramPipeline:
 
 if __name__=="__main__":
     path1 = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Resonator Data/sliced_aug30_conc.csv'
-    path2 = txt = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Resonator Data/Aug30_conc.csv'
+    path2 = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Resonator Data/Aug30_conc.csv'
     htp = HistogramPipeline(path1,path2)
     htp.plot(title="August 30th Concentration", save=True)
 

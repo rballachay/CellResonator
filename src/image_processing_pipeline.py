@@ -7,7 +7,6 @@ Created on Sun Jun 13 12:08:37 2021
 """
 import os
 import cv2
-import glob
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -30,9 +29,6 @@ class ResonatorPipeline:
         sliced = self.pipeline_main()
         return sliced
         
-    def get_video(self,path):
-        video = glob.glob(path+"/*.mp4")[0]
-        return video
     
     def prepare_registration(self):
         # Grab the first frame from our reference photo
@@ -208,5 +204,4 @@ class ResonatorPipeline:
         
         cap.release()
         out.release()
-        return self.outlet+'/sliced.csv'
-        
+        return self.outlet+'/sliced.csv'    
