@@ -25,7 +25,7 @@ class ReadExcel:
                 df_dict[title] = df
             
             except Exception:
-                print(f"Something went wrong trying to get {title} data, check it is in the format specified in the docs.")
+                print(f"Something went wrong trying to get {title} data, check format specified in the docs.")
                 continue       
         
         
@@ -41,7 +41,7 @@ class ReadExcel:
             }
             
             
-    def _correct_df_time(df_dict):
+    def _correct_df_time(self,df_dict):
         _df_dict = df_dict.copy()
         for title in df_dict:
             if title=="reference_data":
@@ -51,11 +51,11 @@ class ReadExcel:
         return df_dict
         
         
-    def _format_reference_data(df):
+    def _format_reference_data(self,df):
         _df = df.copy()
-        _df = _df[_df[_df.columns[1]]!="End of video"]
+        _df = _df.replace("Start of video","0:0")
+        _df = _df[_df[_df.columns[1]].str.contains(':')]
         _df[_df.columns[1]] = [float(i.split(":")[0])*60+float(i.split(":")[1]) for i in _df[_df.columns[1]]]
-        
         df_dict = dict(zip(_df[_df.columns[0]],_df[_df.columns[1]]))
         df_dict["concentration_cells"]=df_dict["concentration_sensor"]=df_dict["Start of concentration"]
         df_dict["washing_cells"]=df_dict["washing_sensor"]=df_dict["Start of washing"]

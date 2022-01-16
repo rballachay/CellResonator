@@ -1,7 +1,95 @@
 from src.utils import process_config
+from pandas._testing import assert_frame_equal
+import pandas as pd
+import json
+import os
 
-def test_process_config_2files():
-    inlet="tests/data/test_folder"
-    data_items = process_config(inlet,2)
-    print(data_items)
+TEST_2FILES = "tests/data/test_folder_2files"
+TEST_1FILE = "tests/data/test_folder_1file"
+TEST_CONC = "tests/data/test_folder_conc"
 
+#######################################################################
+# Section for testing 2 files in one folder (concentration + washing) #
+#######################################################################
+
+def frozen_make_process_config_2files(file=TEST_2FILES):
+    data_items = process_config(file,2)
+
+    conc_wash = data_items['total']['data']
+    for key_1 in  conc_wash:
+        conc_wash = data_items['total']['data'][key_1]
+        for key_2 in conc_wash:
+            conc_wash[key_2] = conc_wash[key_2].to_dict()
+
+    with open(f'{file}{os.sep}result.json', 'w') as fp:
+        json.dump(data_items, fp)
+   
+def test_process_config_2files(file=TEST_2FILES):
+    data_items = process_config(file,2)
+    with open(f'{file}{os.sep}result.json', 'r') as fp:
+        data_items_basis = json.load(fp) 
+    
+    for key_1 in  data_items['total']['data']:
+        for key_2 in data_items['total']['data'][key_1]:
+            df_basis = pd.DataFrame.from_dict(data_items_basis['total']['data'][key_1][key_2])
+            df_basis.index=df_basis.index.astype('int64')
+            df_test = data_items['total']['data'][key_1][key_2]
+            assert_frame_equal(df_test,df_basis)
+
+
+######################################################################
+# Section for testing 1 file in one folder (concentration + washing) #
+######################################################################
+
+def frozen_make_process_config_1file(file=TEST_1FILE):
+    data_items = process_config(file,1)
+
+    conc_wash = data_items['total']['data']
+    for key_1 in  conc_wash:
+        conc_wash = data_items['total']['data'][key_1]
+        for key_2 in conc_wash:
+            conc_wash[key_2] = conc_wash[key_2].to_dict()
+
+    with open(f'{file}{os.sep}result.json', 'w') as fp:
+        json.dump(data_items, fp)
+   
+def test_process_config_1files(file=TEST_1FILE):
+    data_items = process_config(file,1)
+    with open(f'{file}{os.sep}result.json', 'r') as fp:
+        data_items_basis = json.load(fp) 
+    
+    for key_1 in  data_items['total']['data']:
+        for key_2 in data_items['total']['data'][key_1]:
+            df_basis = pd.DataFrame.from_dict(data_items_basis['total']['data'][key_1][key_2])
+            df_basis.index=df_basis.index.astype('int64')
+            df_test = data_items['total']['data'][key_1][key_2]
+            assert_frame_equal(df_test,df_basis)
+
+
+#################################################################
+# Section for testing 1 conc file in one folder (concentration) #
+#################################################################
+
+def frozen_make_process_config_conc(file=TEST_CONC):
+    data_items = process_config(file,1)
+
+    conc_wash = data_items['total']['data']
+    for key_1 in  conc_wash:
+        conc_wash = data_items['total']['data'][key_1]
+        for key_2 in conc_wash:
+            conc_wash[key_2] = conc_wash[key_2].to_dict()
+
+    with open(f'{file}{os.sep}result.json', 'w') as fp:
+        json.dump(data_items, fp)
+   
+def test_process_config_conc(file=TEST_CONC):
+    data_items = process_config(file,1)
+    with open(f'{file}{os.sep}result.json', 'r') as fp:
+        data_items_basis = json.load(fp) 
+    
+    for key_1 in  data_items['total']['data']:
+        for key_2 in data_items['total']['data'][key_1]:
+            df_basis = pd.DataFrame.from_dict(data_items_basis['total']['data'][key_1][key_2])
+            df_basis.index=df_basis.index.astype('int64')
+            df_test = data_items['total']['data'][key_1][key_2]
+            assert_frame_equal(df_test,df_basis)

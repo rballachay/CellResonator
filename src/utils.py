@@ -16,10 +16,16 @@ class FileException(Exception):
 def process_config(inlet, file_num):
     xlsx = _get_xlsx(inlet)
     data_items={}
-    if file_num=="1":
+    
+    if str(file_num)=="1":
         data_items = _process_one_video(inlet,xlsx,data_items)
-    elif file_num=="2":
+    elif str(file_num)=="2":
         data_items = _process_two_videos(inlet,xlsx,data_items)
+    elif int(file_num)>3:
+        raise FileException("too many","video",inlet)
+    else:
+        raise FileException("no","video",inlet)
+
     return data_items
 
 
@@ -49,7 +55,7 @@ def _get_video_name(path,title):
     if title=="*":
         return title
     else:
-        vids = _get_video(path, video_name="*",index=False)
+        vids = _get_video(path)
         for vid in vids:
             if title.capitalize() in vid:
                 return vid
@@ -85,11 +91,8 @@ def _check_file_naming(vid_title):
         return "total"
 
 
-def _get_video(path, video_name="*",index=True):
-    if index:
-        return glob.glob(f"{path}{os.sep}{video_name}.mp4")[0]
-    else:
-        return glob.glob(f"{path}{os.sep}{video_name}.mp4")
+def _get_video(path, video_name="*.mp4"):
+    return glob.glob(f"{path}{os.sep}{video_name}")
 
 
 def _count_files(inlet):
@@ -103,4 +106,4 @@ def _get_xlsx(path,video_name="*"):
     elif len(xlsx_list)<1:
         raise FileException("too few", "xlsx files", path)
 
-    return ReadExcel(path).run()
+    return ReadExcel(xlsx_list[0]).run()

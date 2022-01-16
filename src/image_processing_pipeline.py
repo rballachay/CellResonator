@@ -8,40 +8,40 @@ Created on Sun Jun 13 12:08:37 2021
 import os
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-import scipy.ndimage
-import matplotlib.dates as mdates
 import datetime
-from sklearn.preprocessing import MinMaxScaler
+from .config import ENV
 
 class ResonatorPipeline:
     
-    def __init__(self,inFolder,outFolder):
-        self.inlet = inFolder
-        self.outlet = outFolder
-        self.create_outlet(outFolder)
-        self.basis = '/Users/RileyBallachay/Documents/Fifth Year/Work for Dr.Piret/Pipeline_v2.0/Basis'
+    def __init__(self,video_path,basis_video=ENV.BASIS_VIDEO,out_folder=None):
+        self.video_path = video_path
+        if out_folder is None:
+            out_folder = os.sep.join(video_path.split(os.sep)[:-1])
+        self.out_folder = self.create_outlet(out_folder)
+        self.basis = basis_video
     
     def run(self):
         self.prepare_registration()
         sliced = self.pipeline_main()
         return sliced
-        
     
     def prepare_registration(self):
         # Grab the first frame from our reference photo
-        vid_basis = self.get_video(self.basis)
-        vidcap = cv2.VideoCapture(vid_basis)
-        success,image_basis = vidcap.read()  
-        
-        vid_new = self.get_video(self.inlet)
-        vidcap = cv2.VideoCapture(vid_new)
-        success,image_new = vidcap.read() 
-        
-        self.get_homography(image_new,image_basis)
-        return
+        vid_paths = {
+            "video":self.video_path,
+            "basis video":self.basis
+        }
+        vids={}
+        for vid_name in vid_paths:
+            vid_path = vid_paths[vid_name]
+            vidcap = cv2.VideoCapture(vid_path)
+            success,vid = vidcap.read()  
+            if success:
+                vids[vid_name]=vid
+            else:
+                raise Exception(f"Error reading {vid_name} from path {vid_path}")
+
+        self.get_homography(vids["video"],vids["basis video"])
     
     def get_homography(self,image_new,image_basis):
         MAX_FEATURES = 500
@@ -60,7 +60,7 @@ class ResonatorPipeline:
       
         # Match features.
         matcher = cv2.DescriptorMatcher_create(cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING)
-        matches = matcher.match(descriptors1, descriptors2, None)
+        matches = list(matcher.match(descriptors1, descriptors2, None))
       
         # Sort matches by score
         matches.sort(key=lambda x: x.distance, reverse=False)
@@ -71,7 +71,7 @@ class ResonatorPipeline:
       
         # Draw top matches
         imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
-        cv2.imwrite(self.outlet+"/matches.jpg", imMatches)
+        cv2.imwrite(f"{self.out_folder}{os.sep}{ENV.MATCHES_FILENAME}", imMatches)
       
         # Extract location of good matches
         points1 = np.zeros((len(matches), 2), dtype=np.float32)
@@ -90,61 +90,28 @@ class ResonatorPipeline:
         
         self.homography = h
         return
-    
-    def grab_background(self):
-        # Open the video
-        background_path = self.inlet+'/background.mp4'
-        cap = cv2.VideoCapture(background_path)
-        
-        # Get video characteristics
-        w_frame, h_frame = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
-        
-        ims = []
-        while(cap.isOpened()):
-            ret, frame = cap.read()
-            if ret==True:
-                frame = frame
-                ims.append(frame)
-            else:
-                break
 
-        ims =  np.array([np.array(im) for im in ims])
-        imave = np.average(ims,axis=0).astype(int)
-        imave=np.array(np.round(imave),dtype=np.uint8)
-        
-        self.back_to_sub = imave
-        return
-      
-    def groupedAvg(self,myArray, N=5):
+
+    def grouped_avg(self,myArray, N=5):
         result = np.cumsum(myArray, 0)[N-1::N]/float(N)
         result[1:] = result[1:] - result[:-1]
         return result
      
-    def create_outlet(self,directory):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        return
-            
-    def hist_normalization(self,img, a=0, b=255):
-        c = img.min()
-        d = img.max()
-     
-        out = img.copy()
-        # normalization
-        out = (b - a) / (d - c) * (out - c) + a
-        out[out < a] = a
-        out[out > b] = b
-     
-        out = out.astype(np.uint8)
-        return out
+
+    def create_outlet(self,dir):
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        return dir
+
 
     def pipeline_main(self):
-        #X=977;Y= 275;W= 212;H= 512
-        X=940;Y= 307;W= 249;H= 306
+        X=int(ENV.X)
+        Y=int(ENV.Y)
+        W=int(ENV.W)
+        H=int(ENV.H)
         # Initialize frame counter
         cnt = 0
-        cap = cv2.VideoCapture(self.get_video(self.inlet))
+        cap = cv2.VideoCapture(self.video_path)
         # Some characteristics from the original video
         w_frame, h_frame = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -153,7 +120,7 @@ class ResonatorPipeline:
         
         # output
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(self.outlet+'/result.mp4', fourcc, fps, (W, H))
+        out = cv2.VideoWriter(f"{self.out_folder}{os.sep}{ENV.CROPPED_FILENAME}", fourcc, fps, (W, H))
         
         time = 0
         slices = []
@@ -165,12 +132,12 @@ class ResonatorPipeline:
             cnt += 1 # Counting frames
         
             # Avoid problems when video finish
-            if ret==True:
+            if ret:
                 time = time+time_per_frame
                 printtime = str(datetime.timedelta(seconds=time))
                 
                 # Croping the frame
-                #frame = self.hist_normalization(frame)
+                #frame = self._hist_normalization(frame)
                 #frame = cv2.subtract(frame,self.back_to_sub)
                 frame = cv2.warpPerspective(frame, self.homography, (self.width, self.height))
                 crop_frame = frame[Y:Y+H, X:X+W]
@@ -183,7 +150,6 @@ class ResonatorPipeline:
                 imageGREY = imageGREY.mean(axis=1)
                 slices.append(imageGREY)
             
-                # Saving from the desired frames
                 """
                 font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX
                 crop_frame = cv2.putText(crop_frame, printtime,
@@ -199,9 +165,22 @@ class ResonatorPipeline:
                 break
         
         sliced = np.stack(slices, axis=0)
-        self.sliced = self.groupedAvg(sliced)
-        np.savetxt(self.outlet+'/sliced.csv',self.sliced,delimiter=',')
+        np.savetxt(f"{self.out_folder}{os.sep}{ENV.SLICED_FILENAME}",sliced,delimiter=',')
         
         cap.release()
         out.release()
-        return self.outlet+'/sliced.csv'    
+        return f"{self.out_folder}{os.sep}{ENV.SLICED_FILENAME}"   
+
+                
+    def _hist_normalization(self,img, a=0, b=255):
+        c = img.min()
+        d = img.max()
+     
+        out = img.copy()
+        # normalization
+        out = (b - a) / (d - c) * (out - c) + a
+        out[out < a] = a
+        out[out > b] = b
+     
+        out = out.astype(np.uint8)
+        return out

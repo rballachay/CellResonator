@@ -29,7 +29,9 @@ from .utils import process_config
 
 
 def main(inlet, file_num): 
+    
     data_items = process_config(inlet, file_num)
+
     for title in data_items:
         outlet = "/".join(inlet.split("/")[:-2]) + "/Outlet/" + inlet.split("/")[-1]
                 
