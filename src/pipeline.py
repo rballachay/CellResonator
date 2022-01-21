@@ -39,3 +39,15 @@ def pipeline(
         )
 
     return data_dict
+
+
+def total_video_splitter(path_sliced: str, data_dict: dict):
+    """HistogramPipeline is only set up to do a single phase - be that
+    concentration or washing. In order to run a "total video" need to
+    split the sliced array into two parts - one for concentration and
+    one for washing.
+    """
+
+    FPS = float(ENV.TIME_PER_FRAME) * float(ENV.SLICE_FREQUENCY)
+    
+    data_dict["concentration"]

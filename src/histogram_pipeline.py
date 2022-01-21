@@ -105,12 +105,17 @@ class HistogramPipeline:
     def _read_sliced(self, path_sliced: str, window: tuple, avg_window: int = 5):
         sliced = np.loadtxt(path_sliced, delimiter=",")
         means = sliced[:, window[0] : window[1]].mean(axis=1)[::avg_window]
-        time = np.linspace(0, len(means), len(means)) * float(ENV.TIME_PER_FRAME) * float(ENV.SLICE_FREQUENCY) * avg_window
+        time = (
+            np.linspace(0, len(means), len(means))
+            * float(ENV.TIME_PER_FRAME)
+            * float(ENV.SLICE_FREQUENCY)
+            * avg_window
+        )
         brightness = np.stack((time, means), axis=1)
         return brightness
 
     def _read_cellcount(self, cellcount, time_correction: int):
-        cellcount=cellcount.values
+        cellcount = cellcount.values
         cellcount[:, 0] = cellcount[:, 0] - time_correction
         cellcount = np.array(cellcount)
         return cellcount

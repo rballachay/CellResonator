@@ -65,7 +65,7 @@ def _get_video_name(path, title):
 def _make_data_dictionary(title, xlsx):
     data_dict = {}
     if title == "total":
-        for title in ["concentration", "washing"]:
+        for title in ["concentration", "washing", "reference"]:
             data_dict[title] = _get_data(title, xlsx)
     else:
         data_dict[title] = _get_data(title, xlsx)

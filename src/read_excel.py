@@ -46,13 +46,16 @@ class ReadExcel:
     def _correct_df_time(self, df_dict):
         _df_dict = df_dict.copy()
         for title in df_dict:
-            if title == "reference_data":
-                continue
             df = df_dict[title]
-            df[df.columns[0]] = (
-                60 * df[df.columns[0]] + _df_dict["reference_data"][title]
-            )
-        return df_dict
+            if title == "reference_data":
+                pass
+            else:
+                df[df.columns[0]] = (
+                    60 * df[df.columns[0]] + _df_dict["reference_data"][title]
+                )
+
+            _df_dict[title] = df
+        return _df_dict
 
     def _format_reference_data(self, df):
         _df = df.copy()
