@@ -5,6 +5,14 @@ class ReadExcel:
     def __init__(self, xlsx):
         self.xlsx = xlsx
 
+        self.NAME_DICT = {
+            "concentration_cells": ("A:B", 0, 1, False),
+            "concentration_sensor": ("C:D", 0, 1, False),
+            "washing_cells": ("G:H", 0, 1, False),
+            "washing_sensor": ("I:J", 0, 1, False),
+            "reference_data": ("M:N", None, 0, True),
+        }
+
     def run(self):
         xlsx = self.xlsx
         df_dict = self.get_cellcount_sensor_data(xlsx)
@@ -32,30 +40,7 @@ class ReadExcel:
                 )
                 continue
 
-        df_dict = self._correct_df_time(df_dict)
-        return df_dict
-
-    NAME_DICT = {
-        "concentration_cells": ("A:B", 0, 1, False),
-        "concentration_sensor": ("C:D", 0, 1, False),
-        "washing_cells": ("G:H", 0, 1, False),
-        "washing_sensor": ("I:J", 0, 1, False),
-        "reference_data": ("M:N", None, 0, True),
-    }
-
-    def _correct_df_time(self, df_dict):
-        _df_dict = df_dict.copy()
-        for title in df_dict:
-            df = df_dict[title]
-            if title == "reference_data":
-                pass
-            else:
-                df[df.columns[0]] = (
-                    60 * df[df.columns[0]] + _df_dict["reference_data"][title]
-                )
-
-            _df_dict[title] = df
-        return _df_dict
+        return self._prepare_for_export(df_dict)
 
     def _format_reference_data(self, df):
         _df = df.copy()
@@ -73,3 +58,24 @@ class ReadExcel:
             "Start of washing"
         ]
         return df_dict
+
+    def _prepare_for_export(self, df_dict: dict):
+        _df_dict = self._correct_df_time(df_dict.copy())
+        _df_dict["reference_data"] = pd.DataFrame.from_dict(
+            _df_dict["reference_data"], orient="index", columns=["value"]
+        ).reset_index()
+        return _df_dict
+
+    def _correct_df_time(self, df_dict):
+        _df_dict = df_dict.copy()
+        for title in _df_dict:
+            df = _df_dict[title]
+            if title == "reference_data":
+                continue
+            else:
+                df[df.columns[0]] = (
+                    60 * df[df.columns[0]] + _df_dict["reference_data"][title]
+                )
+
+            _df_dict[title] = df
+        return _df_dict

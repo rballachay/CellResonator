@@ -48,7 +48,7 @@ def test_process_config_2files(file=TEST_2FILES):
 ######################################################################
 
 
-def make_process_config_1file(file=TEST_1FILE):
+def make_process_config_1files(file=TEST_1FILE):
     data_items = process_config(file, 1)
 
     conc_wash = data_items["total"]["data"]

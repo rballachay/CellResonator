@@ -15,6 +15,8 @@ class FileException(Exception):
 
 def process_config(inlet, file_num):
     xlsx = _get_xlsx(inlet)
+
+    print(xlsx)
     data_items = {}
 
     if str(file_num) == "1":
