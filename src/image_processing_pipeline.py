@@ -164,7 +164,7 @@ class ResonatorPipeline:
 
                 # Percentage
                 xx = cnt * 100 / frames
-                #print((xx), "%")
+                # print((xx), "%")
 
                 imageGREY = crop_frame.mean(axis=2)
                 imageGREY = imageGREY.mean(axis=1)
