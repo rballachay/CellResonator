@@ -64,6 +64,7 @@ pip install -r requirements.txt
 Testing is done using python package pytest. In order to test, need to be on mac and run the following:
 ```bash
 pip install pytest
+
 pytest tests
 ```
 
