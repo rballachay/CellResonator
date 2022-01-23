@@ -17,4 +17,3 @@ def test_histogram_pipeline(load_result_data):
     )
 
     os.remove(f"tests/data/sample_output/concentration_{ENV.HIST_PLOT}")
-

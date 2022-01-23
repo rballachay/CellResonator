@@ -15,7 +15,7 @@ FILES_MADE = (
     ENV.MATCHES_FILENAME,
     f"concentration_{ENV.HIST_PLOT}",
     "washing_vid.mp4",
-    "concentration_vid.mp4"
+    "concentration_vid.mp4",
 )
 
 
@@ -24,6 +24,7 @@ def _cleaning(folder):
         path = f"{folder}/{file}"
         if os.path.exists(path):
             os.remove(path)
+
 
 def test_pipeline():
     _cleaning(FOLDER)
@@ -36,6 +37,7 @@ def test_pipeline():
     )
 
     _cleaning(FOLDER)
+
 
 def test_total_video_pipeline():
     _cleaning(FOLDER_TOTAL)

@@ -50,7 +50,7 @@ class HistogramPipeline:
         fig, ax, ax2, ax3 = self._make_fig(title)
         scaler = MinMaxScaler()
 
-        p1, = ax.plot(
+        (p1,) = ax.plot(
             brightness[:, 0],
             scaler.fit_transform(
                 scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=40).reshape(
@@ -60,23 +60,23 @@ class HistogramPipeline:
             "maroon",
             label="Predicted Cell Loss",
         )
-        p2, = ax2.plot(
+        (p2,) = ax2.plot(
             cellcount[:, 0],
             cellcount[:, 1].reshape(-1, 1),
             "k.",
             label="Downstream Cell Count",
         )
-        p3, = ax3.plot(
+        (p3,) = ax3.plot(
             sensordata[:, 0],
             sensordata[:, 1].reshape(-1, 1),
             color="gray",
-            marker='.',
+            marker=".",
             linestyle="None",
             label="Sensor Measurements",
         )
 
-        #fig.legend(handles=[p1,p2,p3], bbox_to_anchor=(1.04,1), loc="upper left")
-        ax3.spines['right'].set_position(('outward', 70))
+        # fig.legend(handles=[p1,p2,p3], bbox_to_anchor=(1.04,1), loc="upper left")
+        ax3.spines["right"].set_position(("outward", 70))
         fig.tight_layout()
 
         if save:
@@ -134,8 +134,6 @@ class HistogramPipeline:
         return cellcount
 
     def _read_sensordata(self, sensordata, time_correction: int):
-        sensordata=  sensordata.values
-        sensordata[:, 0] =  sensordata[:, 0] - time_correction
+        sensordata = sensordata.values
+        sensordata[:, 0] = sensordata[:, 0] - time_correction
         return sensordata
-
-    

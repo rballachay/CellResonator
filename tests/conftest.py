@@ -2,9 +2,9 @@ import pytest
 import json
 import pandas as pd
 
+
 @pytest.fixture(scope="module")
 def load_result_data():
-
     def _load(path=f"tests/data/sample_output/result.json", _key="concentration"):
         with open(path, "r") as fp:
             data_dict = json.load(fp)
