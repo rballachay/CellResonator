@@ -15,7 +15,7 @@ Each time the camera is positioned relative to the resonator, the exact pixel co
 
 Once the videos are matches, the average resonator intensity is extracted as a csv file and the histograms are plotted alongside the ground-truth data extracted from downstream live cell counts and a resistance sensor. The output plots of the pipeline are shown below:
 
-![](docs/images/results_conc.jpg "Conc") ![](docs/images/results_wash.jpg  "Wash")
+![](docs/images/results_conc.png "Conc") ![](docs/images/results_wash.png  "Wash")
 
 ## Usage
 
