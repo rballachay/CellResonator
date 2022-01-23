@@ -1,7 +1,5 @@
 # Cell Resonator
 
-All code related to work for Dr. Piret at UBC. Project related to image processing for a cell resonator
-
 ## Overview
 
 This repo uses image analyis to predict cell losses in the top of a cell resonator (a device which uses acoustic waves to capture cells so that they may be washed). The average brightness at the top of the resonator (~top 50 pixels) is used to indicate the number of cells passing through the region, and thus, indicate the cell loss. A sample of the resonator footage used to predict cell losses is demonstrated below.

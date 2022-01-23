@@ -11,9 +11,11 @@ TEST_BASIS = f"{FOLDER}/vid_Concentration.mp4"
 
 FILES_MADE = (
     f"concentration_{ENV.SLICED_FILENAME}",
+    f"washing_{ENV.SLICED_FILENAME}",
     ENV.CROPPED_FILENAME,
     ENV.MATCHES_FILENAME,
     f"concentration_{ENV.HIST_PLOT}",
+    f"washing_{ENV.HIST_PLOT}",
     "washing_vid.mp4",
     "concentration_vid.mp4",
 )

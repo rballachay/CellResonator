@@ -1,5 +1,4 @@
 from src.pipeline import total_video_splitter
-from src.pipeline import pipeline
 
 
 def test_total_video_splitter(load_result_data):

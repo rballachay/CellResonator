@@ -1,5 +1,5 @@
 import os
-from src.image_processing_pipeline import ResonatorPipeline
+from src.resonator_pipeline import ResonatorPipeline
 from src.config import ENV
 
 FOLDER = "tests/data/test_folder_2files"

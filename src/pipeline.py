@@ -4,10 +4,10 @@ import pandas as pd
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from moviepy.editor import VideoFileClip
 
-from .config import ENV
-from .histogram_pipeline import HistogramPipeline
-from .image_processing_pipeline import ResonatorPipeline
-from .utils import process_config
+from src.config import ENV
+from src.histogram_pipeline import HistogramPipeline
+from src.resonator_pipeline import ResonatorPipeline
+from src.process import process_config
 
 
 def pipeline(
@@ -55,11 +55,9 @@ def _run_pipeline(
     )
     rsp.run()
 
-    data_dict = data_dict["data"]
-    for key in data_dict:
-        data_dict[key] = pd.DataFrame.from_dict(data_dict[key])
-
-    htp = HistogramPipeline(f"{inlet}{os.sep}{data_type}_{filename}", data_dict)
+    htp = HistogramPipeline(
+        f"{inlet}{os.sep}{data_type}_{filename}", data_dict["data"][data_type]
+    )
     htp.plot(
         title=f"Histogram for {data_type.capitalize()}",
         save=True,
@@ -77,12 +75,11 @@ def total_video_pipeline(
 ):
 
     targets = total_video_splitter(data_dict["total"])
-    print(targets)
 
     for title in ("concentration", "washing"):
         _data_dict_tmp = {}
         _data_dict_tmp["video"] = targets[title]
-        _data_dict_tmp["data"] = data_dict["total"]["data"][title]
+        _data_dict_tmp["data"] = data_dict["total"]["data"]
 
         _run_pipeline(
             _data_dict_tmp, title, inlet, basis_video, dims, plot_name, filename

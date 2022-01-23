@@ -1,4 +1,4 @@
-from src.utils import process_config
+from src.process import process_config
 from pandas._testing import assert_frame_equal
 import pandas as pd
 import json
