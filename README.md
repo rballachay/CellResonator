@@ -2,11 +2,17 @@
 
 All code related to work for Dr. Piret at UBC. Project related to image processing for a cell resonator
 
-## Purpose 
+## Overview
 
-This repo uses image analyis to predict cell losses in the top of a cell resonator (a device which uses acoustic waves to capture cells so that they may be washed).
+This repo uses image analyis to predict cell losses in the top of a cell resonator (a device which uses acoustic waves to capture cells so that they may be washed). A sample of the resonator footage used to predict cell losses is demonstrated below.
 
-![alt-text-1](docs/gifs/restonator.gif "Τhe Cell Resonator")
+![](docs/gifs/restonator.gif "Τhe Cell Resonator")
+
+The average brightness at the top of the resonator (~top 50 pixels) is used to indicate the number of cells passing through the region, and thus, indicate the cell loss. Each time the camera is positioned relative to the resonator, the exact pixel coordiantes of the top of the resonator changes, thus the images need to be calibrated prior to finding the top 50 pixels of the resonator. In order to do this, ORB (Oriented FAST and Rotated BRIEF) features are detected in the image and a reference video of the resonator, the homography between the two videos is calculated and the target video is warped frame-by-frame to match the coordinates of the first video. The ORB feature matches between a reference and target video are shown below: 
+
+![](docs/images/matches.jpg "ORB feature matching")
+
+
 
 The purpose of this repo is to produce the following plots, plotting the cell counts / sensor data alongside 
 
