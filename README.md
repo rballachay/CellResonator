@@ -4,7 +4,11 @@ All code related to work for Dr. Piret at UBC. Project related to image processi
 
 ## Purpose 
 
-... to come
+This repo uses image analyis to predict cell losses in the top of a cell resonator (a device which uses acoustic waves to capture cells so that they may be washed).
+
+![alt-text-1](docs/gifs/restonator.gif "Τhe Cell Resonator")
+
+The purpose of this repo is to produce the following plots, plotting the cell counts / sensor data alongside 
 
 ## Usage
 
