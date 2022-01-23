@@ -13,7 +13,7 @@ Each time the camera is positioned relative to the resonator, the exact pixel co
 
 ![](docs/images/matches.jpg "ORB feature matching")
 
-Once the videos are matches, the average resonator intensity is extracted as a csv file and the histograms are plotted alongside the ground-truth data extracted from downstream live cell counts and a resistance sensor. The output plots of the pipeline are shown below:
+Once the videos are matches, the average resonator intensity is extracted as a csv file and the histograms are plotted alongside the ground-truth data extracted from downstream live cell counts and a resistance sensor. An example of the pipeline's output is shown below:
 
 ![](docs/images/results.png "Conc") 
 

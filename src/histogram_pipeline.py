@@ -34,6 +34,7 @@ class HistogramPipeline:
         self.time_correction = time_correction
         self.brightness = self._read_sliced(path_sliced, window)
         self.cellcount = self._read_cellcount(data_dict["cells"], time_correction)
+        self.sensordata = self._read_sensordata(data_dict["sensor"], time_correction)
         self._fix_bounds()
         self._time_correct()
 
@@ -45,9 +46,11 @@ class HistogramPipeline:
     ):
         brightness = self.brightness
         cellcount = self.cellcount
-        fig, ax, ax2 = self._make_fig(title)
+        sensordata = self.sensordata
+        fig, ax, ax2, ax3 = self._make_fig(title)
         scaler = MinMaxScaler()
-        ax.plot(
+
+        p1, = ax.plot(
             brightness[:, 0],
             scaler.fit_transform(
                 scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=40).reshape(
@@ -57,14 +60,24 @@ class HistogramPipeline:
             "maroon",
             label="Predicted Cell Loss",
         )
-        ax2.plot(
+        p2, = ax2.plot(
             cellcount[:, 0],
             cellcount[:, 1].reshape(-1, 1),
             "k.",
             label="Downstream Cell Count",
         )
-        handles, labels = ax2.get_legend_handles_labels()
-        fig.legend(handles, labels, loc=(0.65, 0.8))
+        p3, = ax3.plot(
+            sensordata[:, 0],
+            sensordata[:, 1].reshape(-1, 1),
+            color="gray",
+            marker='.',
+            linestyle="None",
+            label="Sensor Measurements",
+        )
+
+        #fig.legend(handles=[p1,p2,p3], bbox_to_anchor=(1.04,1), loc="upper left")
+        ax3.spines['right'].set_position(('outward', 70))
+        fig.tight_layout()
 
         if save:
             self._save_fig(fig, path=f"{self.out_folder}{os.sep}{filename}")
@@ -75,14 +88,18 @@ class HistogramPipeline:
     def _make_fig(self, title):
         fig, ax = plt.subplots(dpi=200)
         fig.set_figheight(5)
-        fig.set_figwidth(10)
+        fig.set_figwidth(12)
         fig.autofmt_xdate()
         ax.set_xlabel("Run Duration (minutes)")
         ax.set_title(title)
         ax.set_ylabel("Average Brightness at Top of Frame", color="maroon", fontsize=10)
         ax2 = ax.twinx()
         ax2.set_ylabel("Downstream Cell Count", color="black", fontsize=10)
-        return fig, ax, ax2
+
+        ax3 = ax.twinx()
+        ax3.set_ylabel("Sensor Measurements", color="grey", fontsize=10)
+
+        return fig, ax, ax2, ax3
 
     def _fix_bounds(self):
         cellcount = self.cellcount
@@ -95,12 +112,9 @@ class HistogramPipeline:
         self.brightness = brightness[min_bright:max_bright]
 
     def _time_correct(self):
-        cellcount = self.cellcount
-        brightness = self.brightness
-        cellcount[:, 0] = (cellcount[:, 0]) / 60
-        brightness[:, 0] = brightness[:, 0] / 60
-        self.brightness = brightness
-        self.cellcount = cellcount
+        self.cellcount[:, 0] = self.cellcount[:, 0] / 60
+        self.brightness[:, 0] = self.brightness[:, 0] / 60
+        self.sensordata[:, 0] = self.sensordata[:, 0] / 60
 
     def _read_sliced(self, path_sliced: str, window: tuple, avg_window: int = 5):
         sliced = np.loadtxt(path_sliced, delimiter=",")
@@ -117,5 +131,11 @@ class HistogramPipeline:
     def _read_cellcount(self, cellcount, time_correction: int):
         cellcount = cellcount.values
         cellcount[:, 0] = cellcount[:, 0] - time_correction
-        cellcount = np.array(cellcount)
         return cellcount
+
+    def _read_sensordata(self, sensordata, time_correction: int):
+        sensordata=  sensordata.values
+        sensordata[:, 0] =  sensordata[:, 0] - time_correction
+        return sensordata
+
+    
