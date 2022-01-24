@@ -7,6 +7,7 @@ Created on Mon May 24 16:09:10 2021
 """
 import bisect
 import os
+import warnings
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -26,17 +27,19 @@ class HistogramPipeline:
         data_dict: dict,
         out_folder: str = None,
         window: tuple = (0, 50),
-        time_correction: int = 50,
+        t_correct: int = 50,
     ):
         if out_folder is None:
             out_folder = os.sep.join(path_sliced.split(os.sep)[:-1])
+
         self.out_folder = out_folder
-        self.time_correction = time_correction
-        self.brightness = self._read_sliced(path_sliced, window)
-        self.cellcount = self._read_cellcount(data_dict["cells"], time_correction)
-        self.sensordata = self._read_sensordata(data_dict["sensor"], time_correction)
-        self._fix_bounds()
-        self._time_correct()
+        self.t_correct = t_correct
+
+        self.cellcount, self.sensordata, self.brightness = self._fix_bounds(
+            data_dict["cells"].values,
+            data_dict["sensor"].values,
+            self._read_sliced(path_sliced, window),
+        )
 
     def plot(
         self,
@@ -44,15 +47,25 @@ class HistogramPipeline:
         save: bool = False,
         filename: str = ENV.HIST_PLOT,
     ):
-        brightness = self.brightness
-        cellcount = self.cellcount
-        sensordata = self.sensordata
-        fig, ax, ax2, ax3 = self._make_fig(title)
-        scaler = MinMaxScaler()
+        fig, ax = self._make_fig(title)
 
+        self._plot_brightness(ax, self.brightness)
+
+        if not np.all(np.isnan(self.cellcount)):
+            self._plot_cellcount(ax, self.cellcount)
+
+        if not np.all(np.isnan(self.sensordata)):
+            self._plot_sensordata(ax, self.sensordata)
+
+        fig.tight_layout()
+
+        if save:
+            fig.savefig(f"{self.out_folder}{os.sep}{filename}")
+
+    def _plot_brightness(self, ax, brightness):
         (p1,) = ax.plot(
-            brightness[:, 0],
-            scaler.fit_transform(
+            brightness[:, 0] / 60,
+            MinMaxScaler().fit_transform(
                 scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=40).reshape(
                     -1, 1
                 )
@@ -60,30 +73,29 @@ class HistogramPipeline:
             "maroon",
             label="Predicted Cell Loss",
         )
+
+    def _plot_cellcount(self, ax, cellcount):
+        ax2 = ax.twinx()
+        ax2.set_ylabel("Downstream Cell Count", color="black", fontsize=10)
         (p2,) = ax2.plot(
-            cellcount[:, 0],
+            (cellcount[:, 0] - self.t_correct) / 60,
             cellcount[:, 1].reshape(-1, 1),
             "k.",
             label="Downstream Cell Count",
         )
+
+    def _plot_sensordata(self, ax, sensordata):
+        ax3 = ax.twinx()
+        ax3.set_ylabel("Sensor Measurements", color="grey", fontsize=10)
         (p3,) = ax3.plot(
-            sensordata[:, 0],
+            (sensordata[:, 0] - self.t_correct) / 60,
             sensordata[:, 1].reshape(-1, 1),
             color="gray",
             marker=".",
             linestyle="None",
             label="Sensor Measurements",
         )
-
-        # fig.legend(handles=[p1,p2,p3], bbox_to_anchor=(1.04,1), loc="upper left")
         ax3.spines["right"].set_position(("outward", 70))
-        fig.tight_layout()
-
-        if save:
-            self._save_fig(fig, path=f"{self.out_folder}{os.sep}{filename}")
-
-    def _save_fig(self, fig, path):
-        fig.savefig(path)
 
     def _make_fig(self, title):
         fig, ax = plt.subplots(dpi=200)
@@ -93,28 +105,25 @@ class HistogramPipeline:
         ax.set_xlabel("Run Duration (minutes)")
         ax.set_title(title)
         ax.set_ylabel("Average Brightness at Top of Frame", color="maroon", fontsize=10)
-        ax2 = ax.twinx()
-        ax2.set_ylabel("Downstream Cell Count", color="black", fontsize=10)
+        return fig, ax
 
-        ax3 = ax.twinx()
-        ax3.set_ylabel("Sensor Measurements", color="grey", fontsize=10)
+    def _fix_bounds(self, cellcount, sensordata, brightness):
+        if not np.all(np.isnan(cellcount)):
+            data = cellcount
+        elif not np.all(np.isnan(sensordata)):
+            data = sensordata
+        else:
+            warnings.warn(
+                "You have neither cell count nor sensor data... is this a mistake?\n"
+            )
+            return cellcount, sensordata, brightness
 
-        return fig, ax, ax2, ax3
+        t_min = data[0, 0]
+        t_max = data[-1, 0]
+        min_bright = bisect.bisect(brightness[:, 0], data[0, 0])
+        max_bright = bisect.bisect(brightness[:, 0], data[-1, 0])
 
-    def _fix_bounds(self):
-        cellcount = self.cellcount
-        brightness = self.brightness
-        t_min = cellcount[0, 0]
-        t_max = cellcount[-1, 0]
-        min_bright = bisect.bisect(brightness[:, 0], t_min)
-        max_bright = bisect.bisect(brightness[:, 0], t_max)
-
-        self.brightness = brightness[min_bright:max_bright]
-
-    def _time_correct(self):
-        self.cellcount[:, 0] = self.cellcount[:, 0] / 60
-        self.brightness[:, 0] = self.brightness[:, 0] / 60
-        self.sensordata[:, 0] = self.sensordata[:, 0] / 60
+        return cellcount, sensordata, brightness[min_bright:max_bright]
 
     def _read_sliced(self, path_sliced: str, window: tuple, avg_window: int = 5):
         sliced = np.loadtxt(path_sliced, delimiter=",")
@@ -127,13 +136,3 @@ class HistogramPipeline:
         )
         brightness = np.stack((time, means), axis=1)
         return brightness
-
-    def _read_cellcount(self, cellcount, time_correction: int):
-        cellcount = cellcount.values
-        cellcount[:, 0] = cellcount[:, 0] - time_correction
-        return cellcount
-
-    def _read_sensordata(self, sensordata, time_correction: int):
-        sensordata = sensordata.values
-        sensordata[:, 0] = sensordata[:, 0] - time_correction
-        return sensordata
