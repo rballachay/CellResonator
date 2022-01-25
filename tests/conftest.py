@@ -45,4 +45,5 @@ def _get_files_made():
         f"washing_{ENV.HIST_PLOT}",
         "washing_vid.mp4",
         "concentration_vid.mp4",
+        f"concentration_{ENV.xlsx}" f"washing_{ENV.xlsx}",
     )

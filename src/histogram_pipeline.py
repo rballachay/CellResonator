@@ -28,18 +28,23 @@ class HistogramPipeline:
         out_folder: str = None,
         window: tuple = (0, 50),
         t_correct: int = 50,
+        xlsxname: bool = ENV.XLSX,
     ):
         if out_folder is None:
             out_folder = os.sep.join(path_sliced.split(os.sep)[:-1])
-
         self.out_folder = out_folder
-        self.t_correct = t_correct
 
-        self.cellcount, self.sensordata, self.brightness = self._fix_bounds(
+        self.cellcount, self.sensordata, self.brightness = self._preproc_data(
             data_dict["cells"].values,
             data_dict["sensor"].values,
             self._read_sliced(path_sliced, window),
+            t_correct,
         )
+
+        if xlsxname is not None:
+            self._data_to_xlsx(
+                self.cellcount, self.sensordata, self.brightness, xlsxname
+            )
 
     def plot(
         self,
@@ -64,12 +69,8 @@ class HistogramPipeline:
 
     def _plot_brightness(self, ax, brightness):
         (p1,) = ax.plot(
-            brightness[:, 0] / 60,
-            MinMaxScaler().fit_transform(
-                scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=40).reshape(
-                    -1, 1
-                )
-            ),
+            brightness[:, 0],
+            brightness[:, 1],
             "maroon",
             label="Predicted Cell Loss",
         )
@@ -78,8 +79,8 @@ class HistogramPipeline:
         ax2 = ax.twinx()
         ax2.set_ylabel("Downstream Cell Count", color="black", fontsize=10)
         (p2,) = ax2.plot(
-            (cellcount[:, 0] - self.t_correct) / 60,
-            cellcount[:, 1].reshape(-1, 1),
+            cellcount[:, 0],
+            cellcount[:, 1],
             "k.",
             label="Downstream Cell Count",
         )
@@ -88,8 +89,8 @@ class HistogramPipeline:
         ax3 = ax.twinx()
         ax3.set_ylabel("Sensor Measurements", color="grey", fontsize=10)
         (p3,) = ax3.plot(
-            (sensordata[:, 0] - self.t_correct) / 60,
-            sensordata[:, 1].reshape(-1, 1),
+            sensordata[:, 0],
+            sensordata[:, 1],
             color="gray",
             marker=".",
             linestyle="None",
@@ -107,6 +108,15 @@ class HistogramPipeline:
         ax.set_ylabel("Average Brightness at Top of Frame", color="maroon", fontsize=10)
         return fig, ax
 
+    def _preproc_data(self, cellcount, sensordata, brightness, t_correct):
+        cellcount, sensordata, brightness = self._t_correct(
+            cellcount, sensordata, brightness, t_correct
+        )
+        cellcount, sensordata, brightness = self._fix_bounds(
+            cellcount, sensordata, brightness
+        )
+        return cellcount, sensordata, brightness
+
     def _fix_bounds(self, cellcount, sensordata, brightness):
         if not np.all(np.isnan(cellcount)):
             data = cellcount
@@ -118,12 +128,19 @@ class HistogramPipeline:
             )
             return cellcount, sensordata, brightness
 
-        t_min = data[0, 0]
-        t_max = data[-1, 0]
         min_bright = bisect.bisect(brightness[:, 0], data[0, 0])
         max_bright = bisect.bisect(brightness[:, 0], data[-1, 0])
 
         return cellcount, sensordata, brightness[min_bright:max_bright]
+
+    def _t_correct(self, cellcount, sensordata, brightness, t_correct):
+        sensordata[:, 0] = (sensordata[:, 0] - t_correct) / 60
+        cellcount[:, 0] = (cellcount[:, 0] - t_correct) / 60
+        brightness[:, 0] = brightness[:, 0] / 60
+        brightness[:, 1] = MinMaxScaler().fit_transform(
+            scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=40).reshape(-1, 1)
+        )[:, 0]
+        return sensordata, cellcount, brightness
 
     def _read_sliced(self, path_sliced: str, window: tuple, avg_window: int = 5):
         sliced = np.loadtxt(path_sliced, delimiter=",")
@@ -136,3 +153,19 @@ class HistogramPipeline:
         )
         brightness = np.stack((time, means), axis=1)
         return brightness
+
+    def _data_to_xlsx(self, cellcount, sensordata, brightness, xlsxname):
+        df = pd.DataFrame(
+            data=brightness,
+            columns=["Time (s) - imaging", "Image analysis (Scaled Brightness)"],
+        )
+
+        if not np.all(np.isnan(cellcount)):
+            df["Time (s) - cells"] = pd.Series(cellcount[:, 0])
+            df["Cell count (M cells/mL)"] = pd.Series(cellcount[:, 1])
+
+        if not np.all(np.isnan(sensordata)):
+            df["Time (s) - sensor"] = pd.Series(sensordata[:, 0])
+            df["Sensor"] = pd.Series(sensordata[:, 1])
+
+        df.to_excel(f"{self.out_folder}{os.sep}{xlsxname}", index=False)

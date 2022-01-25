@@ -45,6 +45,7 @@ def _run_pipeline(
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
+    xlsxname: str = ENV.XLSX,
 ):
 
     rsp = ResonatorPipeline(
@@ -56,7 +57,9 @@ def _run_pipeline(
     rsp.run()
 
     htp = HistogramPipeline(
-        f"{inlet}{os.sep}{data_type}_{filename}", data_dict["data"][data_type]
+        f"{inlet}{os.sep}{data_type}_{filename}",
+        data_dict["data"][data_type],
+        xlsxname=f"{data_type}_{xlsxname}",
     )
     htp.plot(
         title=f"Histogram for {data_type.capitalize()}",
