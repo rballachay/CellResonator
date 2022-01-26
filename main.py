@@ -12,13 +12,13 @@ from src.pipeline import pipeline
 
 @click.command()
 @click.option(
-    "--i",
+    "-i",
     "inlet",
     prompt=True,
     help="Path to folder where videos + excel file are located",
 )
 @click.option(
-    "--f",
+    "-f",
     "file_num",
     prompt=False,
     default="2",
