@@ -36,7 +36,7 @@ pip install -r requirements.txt
 3. Run the package from terminal/command line using
 
 ```bash
-python -m main "path/to/folder/with/data"
+python -m main -i "path/to/folder/with/data"
 ```
 
 The script will run and produce the histograms indicated above
