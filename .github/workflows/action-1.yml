@@ -27,9 +27,8 @@ jobs:
       - name: Black --check
         run: |
           pip install black
-          black --check analyzer
+          black --check src
           black --check tests
-          black --check scripts
       - name: Test with pytest
         run: |
           pip install pytest==6.2.5
