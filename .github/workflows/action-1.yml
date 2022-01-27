@@ -1,0 +1,37 @@
+name: PeakList Analyzer
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  peaklist-analyzer-test:
+    runs-on: ubuntu-18.04
+    strategy:
+      max-parallel: 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          python --version
+          pip install -r requirements.txt
+      - name: Black --check
+        run: |
+          pip install black
+          black --check analyzer
+          black --check tests
+          black --check scripts
+      - name: Test with pytest
+        run: |
+          pip install pytest==6.2.5
+          pip install pytest-env==0.6.2
+          pytest tests
