@@ -16,7 +16,6 @@ class FileException(Exception):
 def process_config(inlet, file_num):
     xlsx = _get_xlsx(inlet)
 
-    print(xlsx)
     data_items = {}
 
     if str(file_num) == "1":
@@ -94,15 +93,20 @@ def _check_file_naming(vid_title):
 
 
 def _get_video(path, video_name="*.mp4"):
-    return glob.glob(f"{path}{os.sep}{video_name}")
+    vids = glob.glob(f"{path}{os.sep}{video_name}")
+    vids = [v for v in vids if "small" not in v]
+    return vids
 
 
 def _count_files(inlet):
-    return len([file for file in os.listdir(inlet) if file.endswith(".mp4")])
+    return len(_get_video(inlet))
 
 
 def _get_xlsx(path, video_name="*"):
     xlsx_list = glob.glob(f"{path}{os.sep}{video_name}.xlsx")
+
+    # exclude results - essential for multiple files
+    xlsx_list = [x for x in xlsx_list if "results" not in x]
     if len(xlsx_list) > 1:
         raise FileException("too many", "xlsx files", path)
     elif len(xlsx_list) < 1:

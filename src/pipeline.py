@@ -13,7 +13,7 @@ from src.process import process_config
 def pipeline(
     inlet: str,
     file_num: str,
-    basis_video: str = ENV.BASIS_VIDEO,
+    basis_image: str = ENV.BASIS_IMAGE,
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
@@ -23,14 +23,14 @@ def pipeline(
     for data_type in data_items:
         if data_type == "total":
             total_video_pipeline(
-                inlet, data_items, basis_video, dims, plot_name, filename
+                inlet, data_items, basis_image, dims, plot_name, filename
             )
         else:
             _run_pipeline(
                 data_items[data_type],
                 data_type,
                 inlet,
-                basis_video,
+                basis_image,
                 dims,
                 plot_name,
                 filename,
@@ -41,7 +41,7 @@ def _run_pipeline(
     data_dict: dict,
     data_type: str,
     inlet: str,
-    basis_video: str = ENV.BASIS_VIDEO,
+    basis_image: str = ENV.BASIS_IMAGE,
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
@@ -50,7 +50,7 @@ def _run_pipeline(
 
     rsp = ResonatorPipeline(
         data_dict["video"],
-        basis_video=basis_video,
+        basis_image=basis_image,
         dims=dims,
         filename=f"{data_type}_{filename}",
     )
@@ -71,7 +71,7 @@ def _run_pipeline(
 def total_video_pipeline(
     inlet: str,
     data_dict: dict,
-    basis_video: str = ENV.BASIS_VIDEO,
+    basis_image: str = ENV.BASIS_IMAGE,
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
@@ -85,7 +85,7 @@ def total_video_pipeline(
         _data_dict_tmp["data"] = data_dict["total"]["data"]
 
         _run_pipeline(
-            _data_dict_tmp, title, inlet, basis_video, dims, plot_name, filename
+            _data_dict_tmp, title, inlet, basis_image, dims, plot_name, filename
         )
 
 

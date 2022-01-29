@@ -10,10 +10,11 @@ FOLDER = "tests/data/sample_missing"
 
 
 VID_PATH = f"{FOLDER}/vid_Washing.mp4"
-TEST_BASIS = f"{FOLDER}/vid_Concentration.mp4"
 
 
-def make_process_config_conc(file=FOLDER):
+def make_process_config_conc(cleaning, file=FOLDER):
+
+    cleaning(file)
     data_items = process_config(file, 1)
 
     conc_wash = data_items["concentration"]["data"]
@@ -25,8 +26,11 @@ def make_process_config_conc(file=FOLDER):
     with open(f"{file}{os.sep}result.json", "w") as fp:
         json.dump(data_items, fp)
 
+    cleaning(file)
 
-def test_process_config_conc(file=FOLDER):
+
+def test_process_config_conc(cleaning, file=FOLDER):
+    cleaning(file)
     data_items = process_config(file, 1)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
@@ -40,6 +44,8 @@ def test_process_config_conc(file=FOLDER):
             df_test = data_items["concentration"]["data"][key_1][key_2]
             assert_frame_equal(df_test, df_basis)
 
+    cleaning(file)
+
 
 def test_pipeline(cleaning):
     cleaning(FOLDER)
@@ -47,7 +53,6 @@ def test_pipeline(cleaning):
     pipeline(
         FOLDER,
         "1",
-        basis_video=TEST_BASIS,
         dims={"X": 50, "Y": 50, "W": 50, "H": 50},
     )
 

@@ -12,13 +12,14 @@ import cv2
 import numpy as np
 
 from .config import ENV
+from .resize import get_downscaled_video
 
 
 class ResonatorPipeline:
     def __init__(
         self,
         video_path: str,
-        basis_video: str = ENV.BASIS_VIDEO,
+        basis_image: str = ENV.BASIS_IMAGE,
         out_folder: str = None,
         dims: dict = {
             "X": int(ENV.X),
@@ -28,11 +29,13 @@ class ResonatorPipeline:
         },
         filename: str = ENV.SLICED_FILENAME,
     ):
-        self.video_path = video_path
+        # video is unnecessarily big in native format
+        self.video_path = get_downscaled_video(video_path)
+
         if out_folder is None:
             out_folder = os.sep.join(video_path.split(os.sep)[:-1])
         self.out_folder = self.create_outlet(out_folder)
-        self.basis = basis_video
+        self.basis = basis_image
         self.X = dims["X"]
         self.Y = dims["Y"]
         self.W = dims["W"]
@@ -46,28 +49,27 @@ class ResonatorPipeline:
 
     def prepare_registration(self):
         # Grab the first frame from our reference photo
-        vid_paths = {"video": self.video_path, "basis video": self.basis}
-        vids = {}
-        for vid_name in vid_paths:
-            vid_path = vid_paths[vid_name]
-            vidcap = cv2.VideoCapture(vid_path)
-            success, vid = vidcap.read()
-            if success:
-                vids[vid_name] = vid
-            else:
-                raise Exception(f"Error reading {vid_name} from path {vid_path}")
+        vidcap = cv2.VideoCapture(self.video_path)
 
-        self.get_homography(vids["video"], vids["basis video"])
+        # take 100th frame to avoid issues with reading
+        # first frame
+        for _ in range(100):
+            success, vid = vidcap.read()
+        if not success:
+            raise Exception(f"Error reading 100th frame from path {self.video_path}")
+
+        self.get_homography(vid, cv2.imread(self.basis))
 
     def get_homography(self, image_new, image_basis):
         MAX_FEATURES = 500
-        GOOD_MATCH_PERCENT = 0.99
+        GOOD_MATCH_PERCENT = 0.999
 
         im1 = image_new
         im2 = image_basis
+
         # Convert images to grayscale
         im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
-        im2Gray = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+        im2Gray = cv2.cvtColor(im1, cv2.COLOR_RGB2GRAY)
 
         # Detect ORB features and compute descriptors.
         orb = cv2.ORB_create(MAX_FEATURES)
@@ -100,13 +102,7 @@ class ResonatorPipeline:
             points2[i, :] = keypoints2[match.trainIdx].pt
 
         # Find homography
-        h, mask = cv2.findHomography(points1, points2, cv2.RANSAC)
-
-        # Use homography
-        self.height, self.width, channels = im2.shape
-        im1Reg = cv2.warpPerspective(im1, h, (self.width, self.height))
-
-        self.homography = h
+        self.homography, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
         return
 
     def grouped_avg(self, myArray, N=5):
@@ -120,16 +116,10 @@ class ResonatorPipeline:
         return dir
 
     def pipeline_main(self):
-        # Initialize frame counter
-        cnt = 0
         cap = cv2.VideoCapture(self.video_path)
-        # Some characteristics from the original video
-        w_frame, h_frame = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(
-            cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        )
-        fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
-        time_per_frame = 1 / fps
+        # Some characteristics from the original video
+        fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
         # output
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -140,44 +130,21 @@ class ResonatorPipeline:
             (self.W, self.H),
         )
 
-        time = 0
         slices = []
+
+        X, Y, W, H = self._warp_coordinates()
 
         # Now we start
         while cap.isOpened():
             ret, frame = cap.read()
 
-            cnt += 1  # Counting frames
-
             # Avoid problems when video finish
             if ret:
-                time = time + time_per_frame
-                printtime = str(datetime.timedelta(seconds=time))
 
-                # Croping the frame
-                # frame = self._hist_normalization(frame)
-                # frame = cv2.subtract(frame,self.back_to_sub)
-                frame = cv2.warpPerspective(
-                    frame, self.homography, (self.width, self.height)
-                )
-                crop_frame = frame[self.Y : self.Y + self.H, self.X : self.X + self.W]
+                crop_frame = frame[Y : Y + H, X : X + W, :]
 
-                # Percentage
-                xx = cnt * 100 / frames
-                # print((xx), "%")
-
-                imageGREY = crop_frame.mean(axis=2)
-                imageGREY = imageGREY.mean(axis=1)
+                imageGREY = crop_frame.mean(axis=2).mean(axis=1)
                 slices.append(imageGREY)
-
-                """
-                font = cv2.FONT_HERSHEY_SCRIPT_SIMPLEX
-                crop_frame = cv2.putText(crop_frame, printtime,
-                                    (10, 50),
-                                    font, 1,
-                                    (255, 255, 255), 
-                                    2, cv2.LINE_8)
-                """
 
                 # I see the answer now. Here you save all the video
                 out.write(crop_frame)
@@ -190,6 +157,19 @@ class ResonatorPipeline:
         cap.release()
         out.release()
         return f"{self.out_folder}{os.sep}{self.filename}"
+
+    def _warp_coordinates(self):
+        # this is the start, or the upper left corner of the mask
+        start = np.matmul(self.homography, (self.X, self.Y, 0))
+
+        # this is the bottom right corner of the mask
+        end = np.matmul(self.homography, (self.X + self.W, self.Y + self.H, 0))
+        return (
+            int(start[0]),
+            int(start[1]),
+            int(end[1] - start[1]),
+            int(end[0] - start[0]),
+        )
 
     def _hist_normalization(self, img, a=0, b=255):
         c = img.min()

@@ -27,7 +27,8 @@ def make_process_config_2files(file=TEST_2FILES):
         json.dump(data_items, fp)
 
 
-def test_process_config_2files(file=TEST_2FILES):
+def test_process_config_2files(cleaning, file=TEST_2FILES):
+    cleaning(file)
     data_items = process_config(file, 2)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
@@ -41,6 +42,8 @@ def test_process_config_2files(file=TEST_2FILES):
                 df_basis.index = df_basis.index.astype("int64")
                 df_test = data_items[key_1]["data"][key_2][key_3]
                 assert_frame_equal(df_test, df_basis)
+
+    cleaning(file)
 
 
 ######################################################################
@@ -61,7 +64,9 @@ def make_process_config_1files(file=TEST_1FILE):
         json.dump(data_items, fp)
 
 
-def test_process_config_1files(file=TEST_1FILE):
+def test_process_config_1files(cleaning, file=TEST_1FILE):
+    cleaning(file)
+
     data_items = process_config(file, 1)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
@@ -74,6 +79,8 @@ def test_process_config_1files(file=TEST_1FILE):
             df_basis.index = df_basis.index.astype("int64")
             df_test = data_items["total"]["data"][key_1][key_2]
             assert_frame_equal(df_test, df_basis)
+
+    cleaning(file)
 
 
 #################################################################
@@ -94,7 +101,9 @@ def make_process_config_conc(file=TEST_CONC):
         json.dump(data_items, fp)
 
 
-def test_process_config_conc(file=TEST_CONC):
+def test_process_config_conc(cleaning, file=TEST_CONC):
+    cleaning(file)
+
     data_items = process_config(file, 1)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
@@ -107,3 +116,5 @@ def test_process_config_conc(file=TEST_CONC):
             df_basis.index = df_basis.index.astype("int64")
             df_test = data_items["concentration"]["data"][key_1][key_2]
             assert_frame_equal(df_test, df_basis)
+
+    cleaning(file)
