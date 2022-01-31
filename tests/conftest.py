@@ -7,7 +7,10 @@ from src.config import ENV
 
 @pytest.fixture(scope="module")
 def load_result_data():
-    def _load(path=f"tests{os.sep}data{os.sep}sample_output{os.sep}result.json", _key="concentration"):
+    def _load(
+        path=f"tests{os.sep}data{os.sep}sample_output{os.sep}result.json",
+        _key="concentration",
+    ):
         with open(path, "r") as fp:
             data_dict = json.load(fp)
 

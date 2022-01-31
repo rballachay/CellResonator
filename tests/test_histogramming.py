@@ -16,5 +16,7 @@ def test_histogram_pipeline(load_result_data):
         filename=f"concentration_{ENV.HIST_PLOT}",
     )
 
-    os.remove(f"tests{os.sep}data{os.sep}sample_output{os.sep}concentration_{ENV.HIST_PLOT}")
+    os.remove(
+        f"tests{os.sep}data{os.sep}sample_output{os.sep}concentration_{ENV.HIST_PLOT}"
+    )
     os.remove(f"tests{os.sep}data{os.sep}sample_output{os.sep}{ENV.XLSX}")
