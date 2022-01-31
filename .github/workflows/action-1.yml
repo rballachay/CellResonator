@@ -11,7 +11,7 @@ on:
 
 jobs:
   peaklist-analyzer-test:
-    runs-on: ubuntu-18.04
+    runs-on: windows-latest
     strategy:
       max-parallel: 5
     steps:
