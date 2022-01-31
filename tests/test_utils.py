@@ -4,9 +4,9 @@ import pandas as pd
 import json
 import os
 
-TEST_2FILES = "tests/data/test_folder_2files"
-TEST_1FILE = "tests/data/test_folder_1file"
-TEST_CONC = "tests/data/test_folder_conc"
+TEST_2FILES = f"tests{os.sep}data{os.sep}test_folder_2files"
+TEST_1FILE = f"tests{os.sep}data{os.sep}test_folder_1file"
+TEST_CONC = f"tests{os.sep}data{os.sep}test_folder_conc"
 
 #######################################################################
 # Section for testing 2 files in one folder (concentration + washing) #

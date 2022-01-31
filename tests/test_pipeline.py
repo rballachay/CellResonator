@@ -2,11 +2,11 @@ import os
 from src.config import ENV
 from src.pipeline import pipeline
 
-FOLDER = "tests/data/test_folder_conc"
+FOLDER = f"tests{os.sep}data{os.sep}test_folder_conc"
 
-FOLDER_TOTAL = "tests/data/test_folder_1file"
+FOLDER_TOTAL = f"tests{os.sep}data{os.sep}test_folder_1file"
 
-VID_PATH = f"{FOLDER}/vid_Washing.mp4"
+VID_PATH = f"{FOLDER}{os.sep}vid_Washing.mp4"
 
 
 def test_pipeline(cleaning):

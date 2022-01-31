@@ -6,10 +6,10 @@ from pandas._testing import assert_frame_equal
 from src.pipeline import pipeline
 from src.process import process_config
 
-FOLDER = "tests/data/sample_missing"
+FOLDER = "tests{os.sep}data{os.sep}sample_missing"
 
 
-VID_PATH = f"{FOLDER}/vid_Washing.mp4"
+VID_PATH = f"{FOLDER}{os.sep}vid_Washing.mp4"
 
 
 def make_process_config_conc(cleaning, file=FOLDER):

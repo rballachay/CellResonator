@@ -7,7 +7,7 @@ from src.config import ENV
 
 @pytest.fixture(scope="module")
 def load_result_data():
-    def _load(path=f"tests/data/sample_output/result.json", _key="concentration"):
+    def _load(path=f"tests{os.sep}data{os.sep}sample_output{os.sep}result.json", _key="concentration"):
         with open(path, "r") as fp:
             data_dict = json.load(fp)
 
@@ -28,7 +28,7 @@ def load_result_data():
 def cleaning():
     def _cleaning(folder):
         for file in _get_files_made():
-            path = f"{folder}/{file}"
+            path = f"{folder}{os.sep}{file}"
             if os.path.exists(path):
                 os.remove(path)
 
