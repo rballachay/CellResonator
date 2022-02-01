@@ -5,7 +5,6 @@ Created on Sun Jun 13 12:08:37 2021
 
 @author: RileyBallachay
 """
-import datetime
 import os
 
 import cv2

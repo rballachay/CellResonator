@@ -1,6 +1,7 @@
 import os
 from src.read_excel import ReadExcel
 import glob
+from pathlib import Path
 
 
 class FileException(Exception):
@@ -93,7 +94,8 @@ def _check_file_naming(vid_title):
 
 
 def _get_video(path, video_name="*.mp4"):
-    vids = glob.glob(f"{path}{os.sep}{video_name}")
+    glob_path = Path(f"path{os.sep}")
+    vids = [str(pp) for pp in glob_path.glob(f"{video_name}")]
     vids = [v for v in vids if "small" not in v]
     return vids
 
@@ -103,7 +105,9 @@ def _count_files(inlet):
 
 
 def _get_xlsx(path, video_name="*"):
-    xlsx_list = glob.glob(f"{path}{os.sep}{video_name}.xlsx")
+    path = f"{path}{os.sep}"
+    glob_path = Path(path)
+    xlsx_list = [str(pp) for pp in glob_path.glob(f"{video_name}.xlsx")]
 
     # exclude results - essential for multiple files
     xlsx_list = [x for x in xlsx_list if "results" not in x]

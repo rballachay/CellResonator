@@ -6,7 +6,7 @@ from pandas._testing import assert_frame_equal
 from src.pipeline import pipeline
 from src.process import process_config
 
-FOLDER = "tests{os.sep}data{os.sep}sample_missing"
+FOLDER = f"tests{os.sep}data{os.sep}sample_missing"
 
 
 VID_PATH = f"{FOLDER}{os.sep}vid_Washing.mp4"
