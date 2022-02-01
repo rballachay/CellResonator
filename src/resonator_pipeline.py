@@ -41,9 +41,9 @@ class ResonatorPipeline:
         self.H = dims["H"]
         self.filename = filename
 
-    def run(self):
+    def run(self, cropped_vid=ENV.CROPPED_FILENAME):
         self.prepare_registration()
-        sliced = self.pipeline_main()
+        sliced = self.pipeline_main(cropped_vid)
         return sliced
 
     def prepare_registration(self):
@@ -114,7 +114,7 @@ class ResonatorPipeline:
             os.makedirs(dir)
         return dir
 
-    def pipeline_main(self):
+    def pipeline_main(self, cropped_vid):
         cap = cv2.VideoCapture(self.video_path)
 
         # Some characteristics from the original video
@@ -122,8 +122,9 @@ class ResonatorPipeline:
 
         # output
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+
         out = cv2.VideoWriter(
-            f"{self.out_folder}{os.sep}{ENV.CROPPED_FILENAME}",
+            f"{self.out_folder}{os.sep}{cropped_vid}",
             fourcc,
             fps,
             (self.W, self.H),
@@ -145,7 +146,6 @@ class ResonatorPipeline:
                 imageGREY = crop_frame.mean(axis=2).mean(axis=1)
                 slices.append(imageGREY)
 
-                # I see the answer now. Here you save all the video
                 out.write(crop_frame)
             else:
                 break

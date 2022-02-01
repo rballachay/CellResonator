@@ -42,7 +42,8 @@ def _get_files_made():
     return (
         f"concentration_{ENV.SLICED_FILENAME}",
         f"washing_{ENV.SLICED_FILENAME}",
-        ENV.CROPPED_FILENAME,
+        f"concentration_{ENV.CROPPED_FILENAME}",
+        f"washing_{ENV.CROPPED_FILENAME}",
         ENV.MATCHES_FILENAME,
         f"concentration_{ENV.HIST_PLOT}",
         f"washing_{ENV.HIST_PLOT}",

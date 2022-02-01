@@ -46,6 +46,7 @@ def _run_pipeline(
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
     xlsxname: str = ENV.XLSX,
+    cropped_vid: str = ENV.CROPPED_FILENAME,
 ):
 
     rsp = ResonatorPipeline(
@@ -54,7 +55,7 @@ def _run_pipeline(
         dims=dims,
         filename=f"{data_type}_{filename}",
     )
-    rsp.run()
+    rsp.run(f"{data_type}_{cropped_vid}")
 
     htp = HistogramPipeline(
         f"{inlet}{os.sep}{data_type}_{filename}",
