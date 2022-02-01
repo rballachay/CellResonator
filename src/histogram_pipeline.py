@@ -26,7 +26,7 @@ class HistogramPipeline:
         path_sliced: str,
         data_dict: dict,
         out_folder: str = None,
-        window: tuple = (0, 50),
+        window: tuple = (0, 10),
         t_correct: int = 50,
         xlsxname: bool = ENV.XLSX,
     ):
