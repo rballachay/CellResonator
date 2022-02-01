@@ -14,7 +14,7 @@ from src.pipeline import pipeline
 @click.option(
     "-i",
     "inlet",
-    prompt=True,
+    prompt=False,
     help="Path to folder where videos + excel file are located",
 )
 @click.option(
