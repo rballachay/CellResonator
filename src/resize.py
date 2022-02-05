@@ -3,7 +3,11 @@ import os
 from pathlib import Path
 
 
-def get_downscaled_video(video_path: str, height: int = 360, width: int = None):
+def get_downscaled_video(
+    video_path: str, downsize: bool, height: int = 360, width: int = None
+):
+    if not downsize:
+        return video_path
     # Note that I would use ffmpeg, however users of this script
     # are going to be on both windows and unix-type OS
     path = Path(video_path)

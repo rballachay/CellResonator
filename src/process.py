@@ -1,7 +1,7 @@
 import os
-from src.read_excel import ReadExcel
-import glob
 from pathlib import Path
+
+from src.read_excel import ReadExcel
 
 
 class FileException(Exception):
@@ -96,7 +96,7 @@ def _check_file_naming(vid_title):
 def _get_video(path, video_name="*.mp4"):
     glob_path = Path(f"{path}{os.sep}")
     vids = [str(pp) for pp in glob_path.glob(f"**{os.sep}{video_name}")]
-    vids = [v for v in vids if "small" not in v]
+    vids = [v for v in vids if all([i not in v for i in ("small", "result")])]
     return vids
 
 

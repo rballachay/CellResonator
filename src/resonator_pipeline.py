@@ -27,9 +27,10 @@ class ResonatorPipeline:
             "H": int(ENV.H),
         },
         filename: str = ENV.SLICED_FILENAME,
+        downsize: bool = False,
     ):
         # video is unnecessarily big in native format
-        self.video_path = get_downscaled_video(video_path)
+        self.video_path = get_downscaled_video(video_path, downsize)
 
         if out_folder is None:
             out_folder = os.sep.join(video_path.split(os.sep)[:-1])
@@ -60,15 +61,19 @@ class ResonatorPipeline:
         self.get_homography(vid, cv2.imread(self.basis))
 
     def get_homography(self, image_new, image_basis):
-        MAX_FEATURES = 500
-        GOOD_MATCH_PERCENT = 0.999
+        MAX_FEATURES = 2000
+        GOOD_MATCH_PERCENT = 0.5
 
         im1 = image_new
         im2 = image_basis
 
         # Convert images to grayscale
-        im1Gray = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
-        im2Gray = cv2.cvtColor(im1, cv2.COLOR_RGB2GRAY)
+        im1Gray = cv2.GaussianBlur(
+            cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY), ksize=(5, 5), sigmaX=3, sigmaY=3
+        )
+        im2Gray = cv2.GaussianBlur(
+            cv2.cvtColor(im2, cv2.COLOR_RGB2GRAY), ksize=(5, 5), sigmaX=3, sigmaY=3
+        )
 
         # Detect ORB features and compute descriptors.
         orb = cv2.ORB_create(MAX_FEATURES)
@@ -115,6 +120,8 @@ class ResonatorPipeline:
         return dir
 
     def pipeline_main(self, cropped_vid):
+        X, Y, W, H = self._warp_coordinates()
+
         cap = cv2.VideoCapture(self.video_path)
 
         # Some characteristics from the original video
@@ -127,12 +134,10 @@ class ResonatorPipeline:
             f"{self.out_folder}{os.sep}{cropped_vid}",
             fourcc,
             fps,
-            (self.W, self.H),
+            (W, H),
         )
 
         slices = []
-
-        X, Y, W, H = self._warp_coordinates()
 
         # Now we start
         while cap.isOpened():
@@ -142,9 +147,8 @@ class ResonatorPipeline:
             if ret:
 
                 crop_frame = frame[Y : Y + H, X : X + W, :]
-
-                imageGREY = crop_frame.mean(axis=2).mean(axis=1)
-                slices.append(imageGREY)
+                imageGREY = crop_frame.mean(axis=2)
+                slices.append(imageGREY.mean(axis=1))
 
                 out.write(crop_frame)
             else:
@@ -159,13 +163,15 @@ class ResonatorPipeline:
 
     def _warp_coordinates(self):
         # this is the start, or the upper left corner of the mask
-        start = np.matmul(self.homography, (self.X, self.Y, 0))
+        start = np.matmul(self.homography, np.array((self.Y, self.X, 0)))
 
         # this is the bottom right corner of the mask
-        end = np.matmul(self.homography, (self.X + self.W, self.Y + self.H, 0))
+        end = np.matmul(
+            self.homography, np.array((self.Y + self.H, self.X + self.W, 0))
+        )
         return (
-            int(start[0]),
             int(start[1]),
+            int(start[0]),
             int(end[1] - start[1]),
             int(end[0] - start[0]),
         )

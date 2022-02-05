@@ -14,6 +14,7 @@ def test_pipeline(cleaning):
     pipeline(
         FOLDER,
         "1",
+        basis_image="tests/data/test_basis.jpg",
         dims={"X": 50, "Y": 50, "W": 50, "H": 50},
     )
     cleaning(FOLDER)
@@ -24,6 +25,7 @@ def test_total_video_pipeline(cleaning):
     pipeline(
         FOLDER_TOTAL,
         "1",
+        basis_image="tests/data/test_basis.jpg",
         dims={"X": 50, "Y": 50, "W": 50, "H": 50},
     )
     cleaning(FOLDER_TOTAL)

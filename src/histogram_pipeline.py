@@ -9,12 +9,10 @@ import bisect
 import os
 import warnings
 
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.ndimage
-import seaborn as sns
 from sklearn.preprocessing import MinMaxScaler
 
 from .config import ENV
@@ -26,7 +24,7 @@ class HistogramPipeline:
         path_sliced: str,
         data_dict: dict,
         out_folder: str = None,
-        window: tuple = (0, 10),
+        window: tuple = (25, 100),
         t_correct: int = 50,
         xlsxname: bool = ENV.XLSX,
     ):
@@ -109,11 +107,11 @@ class HistogramPipeline:
         return fig, ax
 
     def _preproc_data(self, cellcount, sensordata, brightness, t_correct):
-        cellcount, sensordata, brightness = self._t_correct(
-            cellcount, sensordata, brightness, t_correct
-        )
         cellcount, sensordata, brightness = self._fix_bounds(
             cellcount, sensordata, brightness
+        )
+        cellcount, sensordata, brightness = self._t_correct(
+            cellcount, sensordata, brightness, t_correct
         )
         return cellcount, sensordata, brightness
 
