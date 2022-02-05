@@ -1,4 +1,5 @@
 import os
+
 from src.config import ENV
 from src.pipeline import pipeline
 
@@ -26,6 +27,6 @@ def test_total_video_pipeline(cleaning):
         FOLDER_TOTAL,
         "1",
         basis_image="tests/data/test_basis.jpg",
-        dims={"X": 50, "Y": 50, "W": 50, "H": 50},
+        dims={"X": 10, "Y": 10, "W": 50, "H": 50},
     )
     cleaning(FOLDER_TOTAL)

@@ -1,6 +1,7 @@
-import moviepy.editor as mp
 import os
 from pathlib import Path
+
+import moviepy.editor as mp
 
 
 def get_downscaled_video(
@@ -16,10 +17,10 @@ def get_downscaled_video(
     if os.path.exists(out_path):
         return out_path
 
-    return _downscale(video_path, out_path, height, width)
+    return downscale(video_path, out_path, height, width)
 
 
-def _downscale(video_path: str, out_path: str, height: int = 360, width: int = None):
+def downscale(video_path: str, out_path: str, height: int = 360, width: int = None):
     clip = mp.VideoFileClip(video_path)
 
     # make the height 360px ( According to moviePy documenation The width is
