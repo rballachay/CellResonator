@@ -54,7 +54,7 @@ def test_pipeline(cleaning):
         FOLDER,
         "1",
         basis_image="tests/data/test_basis.jpg",
-        dims={"X": 50, "Y": 50, "W": 50, "H": 50},
+        dims={"X": 10, "Y": 10, "W": 300, "H": 300},
     )
 
     cleaning(FOLDER)

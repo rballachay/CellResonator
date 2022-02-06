@@ -1,8 +1,9 @@
-from src.process import process_config
-from pandas._testing import assert_frame_equal
-import pandas as pd
 import json
 import os
+
+import pandas as pd
+from pandas._testing import assert_frame_equal
+from src.process import process_config
 
 TEST_2FILES = f"tests{os.sep}data{os.sep}test_folder_2files"
 TEST_1FILE = f"tests{os.sep}data{os.sep}test_folder_1file"
