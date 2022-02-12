@@ -16,6 +16,7 @@ import scipy.ndimage
 from sklearn.preprocessing import MinMaxScaler
 
 from .config import ENV
+from .utils import check_dir_make
 
 
 class HistogramPipeline:
@@ -29,8 +30,10 @@ class HistogramPipeline:
         xlsxname: bool = ENV.XLSX,
     ):
         if out_folder is None:
-            out_folder = os.sep.join(path_sliced.split(os.sep)[:-1])
+            out_folder = f"{os.sep.join(path_sliced.split(os.sep)[:-1])}{os.sep}results"
         self.out_folder = out_folder
+
+        check_dir_make(out_folder)
 
         self.cellcount, self.sensordata, self.brightness = self._preproc_data(
             data_dict["cells"].values,

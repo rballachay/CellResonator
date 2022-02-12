@@ -1,7 +1,9 @@
-import pytest
 import json
-import pandas as pd
 import os
+import shutil
+
+import pandas as pd
+import pytest
 from src.config import ENV
 
 
@@ -30,29 +32,12 @@ def load_result_data():
 @pytest.fixture(scope="module")
 def cleaning():
     def _cleaning(folder):
-        for file in _get_files_made():
-            path = f"{folder}{os.sep}{file}"
-            if os.path.exists(path):
-                os.remove(path)
+        path = f"{folder}{os.sep}{_get_files_made()}"
+        if os.path.isdir(path):
+            shutil.rmtree(f"{folder}{os.sep}{_get_files_made()}")
 
     return _cleaning
 
 
 def _get_files_made():
-    return (
-        f"concentration_{ENV.SLICED_FILENAME}",
-        f"washing_{ENV.SLICED_FILENAME}",
-        f"concentration_{ENV.CROPPED_FILENAME}",
-        f"washing_{ENV.CROPPED_FILENAME}",
-        ENV.MATCHES_FILENAME,
-        f"concentration_{ENV.HIST_PLOT}",
-        f"washing_{ENV.HIST_PLOT}",
-        "washing_vid.mp4",
-        "concentration_vid.mp4",
-        "washing_vid_small.mp4",
-        "concentration_vid_small.mp4",
-        "vid_Washing_small.mp4",
-        "vid_Concentration_small.mp4",
-        f"concentration_{ENV.XLSX}",
-        f"washing_{ENV.XLSX}",
-    )
+    return "results"

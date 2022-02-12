@@ -1,6 +1,8 @@
 import os
-from src.histogram_pipeline import HistogramPipeline
+import shutil
+
 from src.config import ENV
+from src.histogram_pipeline import HistogramPipeline
 
 
 def test_histogram_pipeline(load_result_data):
@@ -16,7 +18,4 @@ def test_histogram_pipeline(load_result_data):
         filename=f"concentration_{ENV.HIST_PLOT}",
     )
 
-    os.remove(
-        f"tests{os.sep}data{os.sep}sample_output{os.sep}concentration_{ENV.HIST_PLOT}"
-    )
-    os.remove(f"tests{os.sep}data{os.sep}sample_output{os.sep}{ENV.XLSX}")
+    shutil.rmtree(f"tests{os.sep}data{os.sep}sample_output{os.sep}results")

@@ -1,0 +1,13 @@
+.git
+.venv
+Archive
+.vscode
+.pytest_cache
+.github
+__pycache__
+Background
+Histogram_Slices
+Original_videos
+Pipeline*
+*.md
+.gitignore

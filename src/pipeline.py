@@ -57,7 +57,7 @@ def _run_pipeline(
     rsp.run(f"{data_type}_{cropped_vid}")
 
     htp = HistogramPipeline(
-        f"{inlet}{os.sep}{data_type}_{filename}",
+        f"{inlet}{os.sep}results{os.sep}{data_type}_{filename}",
         data_dict["data"][data_type],
         xlsxname=f"{data_type}_{xlsxname}",
     )
