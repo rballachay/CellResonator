@@ -7,17 +7,17 @@ from src.config import ENV
 from src.histogram_pipeline import HistogramPipeline
 from src.process import process_config
 from src.resonator_pipeline import ResonatorPipeline
+from src.utils import check_dir_make
 
 
 def pipeline(
     inlet: str,
-    file_num: str,
     basis_image: str = ENV.BASIS_IMAGE,
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
 ):
-    data_items = process_config(inlet, file_num)
+    data_items = process_config(inlet)
 
     for data_type in data_items:
         if data_type == "total":
@@ -54,10 +54,10 @@ def _run_pipeline(
         dims=dims,
         filename=f"{data_type}_{filename}",
     )
-    rsp.run(f"{data_type}_{cropped_vid}")
+    path = rsp.run(f"{data_type}_{cropped_vid}")
 
     htp = HistogramPipeline(
-        f"{inlet}{os.sep}results{os.sep}{data_type}_{filename}",
+        path,
         data_dict["data"][data_type],
         xlsxname=f"{data_type}_{xlsxname}",
     )
@@ -122,11 +122,12 @@ def total_video_splitter(
 def _split_video(vid_path, rng_dat):
     vid_i = os.sep.join(vid_path.split(os.sep)[:-1])
     vid_n = vid_path.split(os.sep)[-1]
-    targetname = f"{vid_i}{os.sep}{rng_dat[0]}_{vid_n}"
+    targetname = f"{vid_i}{os.sep}split_vids{os.sep}{rng_dat[0]}_{vid_n}"
+    check_dir_make(f"{vid_i}{os.sep}split_vids")
     ffmpeg_extract_subclip(
         vid_path,
         rng_dat[1][0],
         rng_dat[1][1],
-        targetname=f"{vid_i}{os.sep}{rng_dat[0]}_{vid_n}",
+        targetname=targetname,
     )
     return targetname

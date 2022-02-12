@@ -32,12 +32,13 @@ def load_result_data():
 @pytest.fixture(scope="module")
 def cleaning():
     def _cleaning(folder):
-        path = f"{folder}{os.sep}{_get_files_made()}"
-        if os.path.isdir(path):
-            shutil.rmtree(f"{folder}{os.sep}{_get_files_made()}")
+        for path in _get_files_made():
+            path = f"{folder}{os.sep}{path}"
+            if os.path.isdir(path):
+                shutil.rmtree(path)
 
     return _cleaning
 
 
 def _get_files_made():
-    return "results"
+    return ("results", "split_vids")

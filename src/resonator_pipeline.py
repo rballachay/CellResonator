@@ -10,9 +10,9 @@ import os
 import cv2
 import numpy as np
 
-from .config import ENV
-from .resize import get_downscaled_video
-from .utils import check_dir_make
+from src.config import ENV
+from src.resize import get_downscaled_video
+from src.utils import check_dir_make
 
 
 class ResonatorPipeline:
@@ -36,9 +36,8 @@ class ResonatorPipeline:
         if out_folder is None:
             out_folder = f"{os.sep.join(video_path.split(os.sep)[:-1])}{os.sep}results"
 
-        check_dir_make(out_folder)
-
         self.out_folder = self.create_outlet(out_folder)
+
         self.basis = basis_image
         self.X = dims["X"]
         self.Y = dims["Y"]

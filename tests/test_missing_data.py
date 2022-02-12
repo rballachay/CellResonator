@@ -15,7 +15,7 @@ VID_PATH = f"{FOLDER}{os.sep}vid_Washing.mp4"
 def make_process_config_conc(cleaning, file=FOLDER):
 
     cleaning(file)
-    data_items = process_config(file, 1)
+    data_items = process_config(file)
 
     conc_wash = data_items["concentration"]["data"]
     for key_1 in conc_wash:
@@ -31,7 +31,7 @@ def make_process_config_conc(cleaning, file=FOLDER):
 
 def test_process_config_conc(cleaning, file=FOLDER):
     cleaning(file)
-    data_items = process_config(file, 1)
+    data_items = process_config(file)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
 
@@ -52,7 +52,6 @@ def test_pipeline(cleaning):
 
     pipeline(
         FOLDER,
-        "1",
         basis_image="tests/data/test_basis.jpg",
         dims={"X": 10, "Y": 10, "W": 300, "H": 300},
     )

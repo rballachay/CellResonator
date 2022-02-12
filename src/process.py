@@ -14,16 +14,18 @@ class FileException(Exception):
         return f"There are {self.state} {self.type} files in the provided folder, please check folder {self.inlet} and refer to docs"
 
 
-def process_config(inlet, file_num):
+def process_config(inlet):
     xlsx = _get_xlsx(inlet)
 
     data_items = {}
 
-    if str(file_num) == "1":
+    n = _count_files(inlet)
+
+    if n == 1:
         data_items = _process_one_video(inlet, xlsx, data_items)
-    elif str(file_num) == "2":
+    elif n == 2:
         data_items = _process_two_videos(inlet, xlsx, data_items)
-    elif int(file_num) > 3:
+    elif n > 3:
         raise FileException("too many", "video", inlet)
     else:
         raise FileException("no", "video", inlet)
@@ -33,22 +35,15 @@ def process_config(inlet, file_num):
 
 def _process_two_videos(inlet, xlsx, data_items):
     for title in ["concentration", "washing"]:
-        data_items = _process_one_video(inlet, xlsx, data_items, title=title, n_total=2)
+        data_items = _process_one_video(inlet, xlsx, data_items, title=title)
     return data_items
 
 
-def _process_one_video(inlet, xlsx, data_items, title="total", n_total=1):
-    n = _count_files(inlet)
-    if n > n_total:
-        raise FileException("too many", "videos", inlet)
-    elif n < n_total:
-        raise FileException("too few", "videos", inlet)
-    else:
-        vid_title = _get_video_name(inlet, title)
-        title = _check_file_naming(vid_title)
-        data = _make_data_dictionary(title, xlsx)
-        data_items[_check_file_naming(vid_title)] = {"video": vid_title, "data": data}
-
+def _process_one_video(inlet, xlsx, data_items, title="total"):
+    vid_title = _get_video_name(inlet, title)
+    title = _check_file_naming(vid_title)
+    data = _make_data_dictionary(title, xlsx)
+    data_items[_check_file_naming(vid_title)] = {"video": vid_title, "data": data}
     return data_items
 
 
@@ -60,7 +55,6 @@ def _get_video_name(path, title):
         for vid in vids:
             if title.capitalize() in vid:
                 return vid
-
     raise FileException("no 'Concentration'/'Washing'", "videos", path)
 
 
@@ -93,10 +87,13 @@ def _check_file_naming(vid_title):
         return "total"
 
 
-def _get_video(path, video_name="*.mp4"):
-    glob_path = Path(f"{path}{os.sep}")
-    vids = [str(pp) for pp in glob_path.glob(f"**{os.sep}{video_name}")]
-    vids = [v for v in vids if all([i not in v for i in ("small", "result")])]
+def _get_video(path, video_name=".mp4"):
+    vids = [v for v in os.listdir(path) if video_name in v]
+    vids = [
+        f"{path}{os.sep}{v}"
+        for v in vids
+        if all([i not in v for i in ("small", "result")])
+    ]
     return vids
 
 
