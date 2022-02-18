@@ -17,6 +17,33 @@ Once the videos are matches, the average resonator intensity is extracted as a c
 
 ## Usage
 
+### Docker
+
+In order to use this app from docker, you need to ensure that you have [Docker](https://www.docker.com/products/docker-desktop) installed. Once it is installed, move inside of this directory (CellResonator) from the command line and run the following commands: 
+
+Building the image:
+
+```docker build -t resonator-pipeline .```
+
+Creating a container (making sure to replace the path to data with your path, this creates a mount between your host machine and the docker container path):
+
+```docker run --name resonator-container -it -v "path/to/data":/home/app_user/data_mount resonator-pipeline```
+
+The following command will open up a bash shell from inside of your docker container, and you can run the following command (DO NOT change the path indicated below)
+
+```python -m main -i /home/app_user/data_mount```
+
+Once the command is done running, and you have verified that your results have been produced, you can exit the container bash using
+
+```exit```
+
+And remove the docker container using 
+
+```docker rm resonator-container```
+
+
+### Python 
+
 1. Move the following files in a single folder:
 
 * Excel sheet from template described in docs
