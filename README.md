@@ -17,7 +17,9 @@ Once the videos are matches, the average resonator intensity is extracted as a c
 
 ## Usage
 
-### Docker
+### 1. Running the pipeline
+
+#### Docker
 
 In order to use this app from docker, you need to ensure that you have [Docker](https://www.docker.com/products/docker-desktop) installed. Once it is installed, move inside of this directory (CellResonator) from the command line and run the following commands: 
 
@@ -42,7 +44,7 @@ And remove the docker container using
 ```docker rm resonator-container```
 
 
-### Python 
+#### Python 
 
 1. Move the following files in a single folder:
 
@@ -63,10 +65,30 @@ pip install -r requirements.txt
 3. Run the package from terminal/command line using
 
 ```bash
-python -m main -i "path/to/folder/with/data" -f "num_files" 
+python -m main -i "path/to/folder/with/data" 
 ```
 
 Where the path is replaced with the appropriate path to the data folder, and num_files corresponds to the number of video files to process. The script will run and produce the histograms indicated above.
+
+### 2. Running a workflow
+
+#### Workflow 1 
+
+Workflow 1 was created to run the brightness algorithm on the top of the resonator video for any length of video and output an xlsx file in the 'results' folder which has the from the start of the video and the average brightness in the top of the resonator. In order to run this workflow in either docker or python, follow all the instructions provided above expect for the portion with the python command. Instead of running
+
+```python -m main -i "path/to/folder/with/data"```
+
+for python, or 
+
+```python -m main -i /home/app_user/data_mount```
+
+for docker, run this command instead:
+
+```python -m main -i "path/to/folder/with/data" -t "workflow1"```
+
+for python, or for docker run:
+
+```python -m main -i /home/app_user/data_mount -t "workflow1"```
 
 
 ## Dependencies
