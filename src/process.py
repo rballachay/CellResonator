@@ -19,7 +19,7 @@ def process_config(inlet):
 
     data_items = {}
 
-    n = _count_files(inlet)
+    n = count_files(inlet)
 
     if n == 1:
         data_items = _process_one_video(inlet, xlsx, data_items)
@@ -49,9 +49,9 @@ def _process_one_video(inlet, xlsx, data_items, title="total"):
 
 def _get_video_name(path, title):
     if title == "total":
-        return _get_video(path)[0]
+        return get_video(path)[0]
     else:
-        vids = _get_video(path)
+        vids = get_video(path)
         for vid in vids:
             if title.capitalize() in vid:
                 return vid
@@ -87,7 +87,7 @@ def _check_file_naming(vid_title):
         return "total"
 
 
-def _get_video(path, video_name=".mp4"):
+def get_video(path, video_name=".mp4"):
     vids = [v for v in os.listdir(path) if video_name in v]
     vids = [
         f"{path}{os.sep}{v}"
@@ -97,8 +97,8 @@ def _get_video(path, video_name=".mp4"):
     return vids
 
 
-def _count_files(inlet):
-    return len(_get_video(inlet))
+def count_files(inlet):
+    return len(get_video(inlet))
 
 
 def _get_xlsx(path, video_name="*"):

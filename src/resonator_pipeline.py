@@ -36,7 +36,7 @@ class ResonatorPipeline:
         if out_folder is None:
             out_folder = f"{os.sep.join(video_path.split(os.sep)[:-1])}{os.sep}results"
 
-        self.out_folder = self.create_outlet(out_folder)
+        self.out_folder = check_dir_make(out_folder)
 
         self.basis = basis_image
         self.X = dims["X"]
@@ -116,11 +116,6 @@ class ResonatorPipeline:
         result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
         result[1:] = result[1:] - result[:-1]
         return result
-
-    def create_outlet(self, dir):
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-        return dir
 
     def pipeline_main(self, cropped_vid):
         X, Y, W, H = self._warp_coordinates()

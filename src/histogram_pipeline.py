@@ -23,7 +23,7 @@ class HistogramPipeline:
     def __init__(
         self,
         path_sliced: str,
-        data_dict: dict,
+        data_dict: dict = None,
         out_folder: str = None,
         window: tuple = (25, 100),
         t_correct: int = 50,
@@ -35,17 +35,21 @@ class HistogramPipeline:
 
         check_dir_make(out_folder)
 
-        self.cellcount, self.sensordata, self.brightness = self._preproc_data(
-            data_dict["cells"].values,
-            data_dict["sensor"].values,
-            self._read_sliced(path_sliced, window),
-            t_correct,
-        )
-
-        if xlsxname is not None:
-            self._data_to_xlsx(
-                self.cellcount, self.sensordata, self.brightness, xlsxname
+        if data_dict is not None:
+            self.cellcount, self.sensordata, self.brightness = self._preproc_data(
+                data_dict["cells"].values,
+                data_dict["sensor"].values,
+                self._read_sliced(path_sliced, window),
+                t_correct,
             )
+            data = [self.cellcount, self.sensordata, self.brightness, xlsxname]
+        else:
+            warnings.warn(
+                "You did not provide a data dictionary, nothing is going to be plotted if you run the plot method"
+            )
+            data = [np.nan, np.nan, self._read_sliced(path_sliced, window), xlsxname]
+        if xlsxname is not None:
+            self._data_to_xlsx(*data)
 
     def plot(
         self,
@@ -53,6 +57,12 @@ class HistogramPipeline:
         save: bool = False,
         filename: str = ENV.HIST_PLOT,
     ):
+        if not hasattr(self, "brightness"):
+            warnings.warn(
+                "No data dictionary was provided in init - the plot method will not create a plot"
+            )
+            return
+
         fig, ax = self._make_fig(title)
 
         self._plot_brightness(ax, self.brightness)
