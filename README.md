@@ -25,23 +25,33 @@ In order to use this app from docker, you need to ensure that you have [Docker](
 
 Building the image:
 
-```docker build -t resonator-pipeline .```
+```bash
+docker build -t resonator-pipeline .
+```
 
 Creating a container (making sure to replace the path to data with your path, this creates a mount between your host machine and the docker container path):
 
-```docker run --name resonator-container -it -v "path/to/data":/home/app_user/data_mount resonator-pipeline```
+```bash
+docker run --name resonator-container -it -v "path/to/data":/home/app_user/data_mount resonator-pipeline
+```
 
 The following command will open up a bash shell from inside of your docker container, and you can run the following command (DO NOT change the path indicated below)
 
-```python -m main -i /home/app_user/data_mount```
+```bash
+python -m main -i /home/app_user/data_mount
+```
 
 Once the command is done running, and you have verified that your results have been produced, you can exit the container bash using
 
-```exit```
+```bash
+exit
+```
 
 And remove the docker container using 
 
-```docker rm resonator-container```
+```bash
+docker rm resonator-container
+```
 
 
 #### Python 
@@ -76,19 +86,27 @@ Where the path is replaced with the appropriate path to the data folder, and num
 
 Workflow 1 was created to run the brightness algorithm on the top of the resonator video for any length of video and output an xlsx file in the 'results' folder which has the from the start of the video and the average brightness in the top of the resonator. In order to run this workflow in either docker or python, follow all the instructions provided above expect for the portion with the python command. Instead of running
 
-```python -m main -i "path/to/folder/with/data"```
+```bash
+python -m main -i "path/to/folder/with/data"
+```
 
 for python, or 
 
-```python -m main -i /home/app_user/data_mount```
+```bash
+python -m main -i /home/app_user/data_mount
+```
 
 for docker, run this command instead:
 
-```python -m main -i "path/to/folder/with/data" -t "workflow1"```
+```bash
+python -m main -i "path/to/folder/with/data" -t "workflow1"
+```
 
 for python, or for docker run:
 
-```python -m main -i /home/app_user/data_mount -t "workflow1"```
+```bash
+python -m main -i /home/app_user/data_mount -t "workflow1"
+```
 
 
 ## Dependencies
