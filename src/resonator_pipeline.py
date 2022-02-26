@@ -147,7 +147,8 @@ class ResonatorPipeline:
         basis_mean = np.mean(
             image_basis[
                 int(ENV.Y) : int(ENV.Y) + int(ENV.H_CHAMBER),
-                int(ENV.X) : int(ENV.X) + int(ENV.W)         ]
+                int(ENV.X) : int(ENV.X) + int(ENV.W),
+            ]
         )
         self.brightness_ratio = basis_mean / target_mean
 
