@@ -46,11 +46,29 @@ class ResonatorPipeline:
         self.filename = filename
 
     def run(self, cropped_vid=ENV.CROPPED_FILENAME):
-        self.prepare_registration()
-        sliced = self.pipeline_main(cropped_vid)
-        return sliced
+        self.normalize_data()
 
-    def prepare_registration(self):
+        return self.pipeline_main(cropped_vid)
+
+    def normalize_data(self):
+        # get the 100 frame for registration and normalization
+        frame_100 = self._get_frame_100()
+
+        # change norm to b+w and gaussian blur
+        target_norm, basis_norm = self._norm_transform(
+            frame_100, cv2.imread(self.basis)
+        )
+
+        # get homography for registration
+        self._get_homography(target_norm, basis_norm)
+
+        self.X, self.Y, self.W, self.H = self._warp_coordinates()
+
+        # get the brightness ratio between the reference
+        # video and the target
+        self._set_brightness_ratio(target_norm, basis_norm)
+
+    def _get_frame_100(self):
         # Grab the first frame from our reference photo
         vidcap = cv2.VideoCapture(self.video_path)
 
@@ -59,29 +77,34 @@ class ResonatorPipeline:
         for _ in range(100):
             success, vid = vidcap.read()
         if not success:
-            raise Exception(f"Error reading 100th frame from path {self.video_path}")
+            raise Exception(f"Error reading 10th frame from path {self.video_path}")
 
-        self.get_homography(vid, cv2.imread(self.basis))
+        return vid
 
-    def get_homography(self, image_new, image_basis):
+    def _norm_transform(self, image_new, image_basis):
+        # Convert images to grayscale
+        im1Gray = cv2.GaussianBlur(
+            cv2.cvtColor(image_new, cv2.COLOR_BGR2GRAY),
+            ksize=(5, 5),
+            sigmaX=3,
+            sigmaY=3,
+        )
+        im2Gray = cv2.GaussianBlur(
+            cv2.cvtColor(image_basis, cv2.COLOR_RGB2GRAY),
+            ksize=(5, 5),
+            sigmaX=3,
+            sigmaY=3,
+        )
+        return im1Gray, im2Gray
+
+    def _get_homography(self, image_new, image_basis):
         MAX_FEATURES = 2000
         GOOD_MATCH_PERCENT = 0.5
 
-        im1 = image_new
-        im2 = image_basis
-
-        # Convert images to grayscale
-        im1Gray = cv2.GaussianBlur(
-            cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY), ksize=(5, 5), sigmaX=3, sigmaY=3
-        )
-        im2Gray = cv2.GaussianBlur(
-            cv2.cvtColor(im2, cv2.COLOR_RGB2GRAY), ksize=(5, 5), sigmaX=3, sigmaY=3
-        )
-
         # Detect ORB features and compute descriptors.
         orb = cv2.ORB_create(MAX_FEATURES)
-        keypoints1, descriptors1 = orb.detectAndCompute(im1Gray, None)
-        keypoints2, descriptors2 = orb.detectAndCompute(im2Gray, None)
+        keypoints1, descriptors1 = orb.detectAndCompute(image_new, None)
+        keypoints2, descriptors2 = orb.detectAndCompute(image_basis, None)
 
         # Match features.
         matcher = cv2.DescriptorMatcher_create(
@@ -97,7 +120,9 @@ class ResonatorPipeline:
         matches = matches[:numGoodMatches]
 
         # Draw top matches
-        imMatches = cv2.drawMatches(im1, keypoints1, im2, keypoints2, matches, None)
+        imMatches = cv2.drawMatches(
+            image_new, keypoints1, image_basis, keypoints2, matches, None
+        )
         cv2.imwrite(f"{self.out_folder}{os.sep}{ENV.MATCHES_FILENAME}", imMatches)
 
         # Extract location of good matches
@@ -112,18 +137,26 @@ class ResonatorPipeline:
         self.homography, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
         return
 
-    def grouped_avg(self, myArray, N=5):
-        result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
-        result[1:] = result[1:] - result[:-1]
-        return result
+    def _set_brightness_ratio(
+        self, image_new, image_basis, h_chamber=int(ENV.H_CHAMBER)
+    ):
+        # get the average chamber brightness
+        target_mean = np.mean(
+            image_new[self.Y : self.Y + h_chamber, self.X : self.X + self.W]
+        )
+        basis_mean = np.mean(
+            image_basis[
+                int(ENV.Y) : int(ENV.Y) + int(ENV.H_CHAMBER),
+                int(ENV.X) : int(ENV.X) + int(ENV.W)         ]
+        )
+        self.brightness_ratio = basis_mean / target_mean
 
     def pipeline_main(self, cropped_vid):
-        X, Y, W, H = self._warp_coordinates()
 
         cap = cv2.VideoCapture(self.video_path)
 
         # Some characteristics from the original video
-        self.fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.fps, _ = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
         # output
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -132,7 +165,7 @@ class ResonatorPipeline:
             f"{self.out_folder}{os.sep}{cropped_vid}",
             fourcc,
             self.fps,
-            (W, H),
+            (self.W, self.H),
         )
 
         slices = []
@@ -144,15 +177,19 @@ class ResonatorPipeline:
             # Avoid problems when video finish
             if ret:
 
-                crop_frame = frame[Y : Y + H, X : X + W, :]
+                crop_frame = frame[
+                    self.Y : self.Y + self.H, self.X : self.X + self.W, :
+                ]
                 imageGREY = crop_frame.mean(axis=2)
-                slices.append(imageGREY.mean(axis=1))
+                image_norm = imageGREY * self.brightness_ratio
+                slices.append(image_norm.mean(axis=1))
 
                 out.write(crop_frame)
             else:
                 break
 
         sliced = np.stack(slices, axis=0)
+        sliced = self._grouped_avg(sliced)
         np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
 
         cap.release()
@@ -174,15 +211,7 @@ class ResonatorPipeline:
             int(end[0] - start[0]),
         )
 
-    def _hist_normalization(self, img, a=0, b=255):
-        c = img.min()
-        d = img.max()
-
-        out = img.copy()
-        # normalization
-        out = (b - a) / (d - c) * (out - c) + a
-        out[out < a] = a
-        out[out > b] = b
-
-        out = out.astype(np.uint8)
-        return out
+    def _grouped_avg(self, myArray, N=5):
+        result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
+        result[1:] = result[1:] - result[:-1]
+        return result
