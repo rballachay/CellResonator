@@ -23,34 +23,32 @@ class HistogramPipeline:
     def __init__(
         self,
         path_sliced: str,
-        data_dict: dict = None,
+        data_dict: dict = {"cells": np.empty(1), "sensor": np.empty(1)},
         out_folder: str = None,
         window: tuple = (25, 100),
         t_correct: int = 50,
         xlsxname: bool = ENV.XLSX,
-        fps: float = ENV.ENV.TIME_PER_FRAME,
+        fps: float = ENV.TIME_PER_FRAME,
     ):
+        self.fps = fps
+
         if out_folder is None:
             out_folder = f"{os.sep.join(path_sliced.split(os.sep)[:-1])}{os.sep}results"
         self.out_folder = out_folder
 
         check_dir_make(out_folder)
 
-        if data_dict is not None:
-            self.cellcount, self.sensordata, self.brightness = self._preproc_data(
-                data_dict["cells"].values,
-                data_dict["sensor"].values,
-                self._read_sliced(path_sliced, window),
-                t_correct,
-            )
-            data = [self.cellcount, self.sensordata, self.brightness, xlsxname]
-        else:
-            warnings.warn(
-                "You did not provide a data dictionary, nothing is going to be plotted if you run the plot method"
-            )
-            data = [np.nan, np.nan, self._read_sliced(path_sliced, window), xlsxname]
+        self.cellcount, self.sensordata, self.brightness_raw = self._preproc_data(
+            data_dict["cells"].values,
+            data_dict["sensor"].values,
+            self._read_sliced(path_sliced, window),
+            t_correct,
+        )
+
+        self.brightness = self._transform_brightness(self.brightness_raw)
+
         if xlsxname is not None:
-            self._data_to_xlsx(*data)
+            self._data_to_xlsx(xlsxname)
 
     def plot(
         self,
@@ -146,13 +144,22 @@ class HistogramPipeline:
         return cellcount, sensordata, brightness[min_bright:max_bright]
 
     def _t_correct(self, cellcount, sensordata, brightness, t_correct):
-        sensordata[:, 0] = (sensordata[:, 0] - t_correct) / 60
-        cellcount[:, 0] = (cellcount[:, 0] - t_correct) / 60
-        brightness[:, 0] = brightness[:, 0] / 60
-        brightness[:, 1] = MinMaxScaler().fit_transform(
-            scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=40).reshape(-1, 1)
+        _cellcount = cellcount.copy()
+        _sensordata = sensordata.copy()
+        _brightness = brightness.copy()
+        if not np.all(np.isnan(_cellcount)):
+            _cellcount[:, 0] = (_cellcount[:, 0] - t_correct) / 60
+        elif not np.all(np.isnan(_sensordata)):
+            _sensordata[:, 0] = (_sensordata[:, 0] - t_correct) / 60
+        _brightness[:, 0] = _brightness[:, 0] / 60
+        return _sensordata, _cellcount, _brightness
+
+    def _transform_brightness(self, brightness):
+        _brightness = brightness.copy()
+        _brightness[:, 1] = MinMaxScaler().fit_transform(
+            scipy.ndimage.gaussian_filter1d(_brightness[:, 1], sigma=40).reshape(-1, 1)
         )[:, 0]
-        return sensordata, cellcount, brightness
+        return _brightness
 
     def _read_sliced(self, path_sliced: str, window: tuple, avg_window: int = 5):
         sliced = np.loadtxt(path_sliced, delimiter=",")
@@ -166,18 +173,22 @@ class HistogramPipeline:
         brightness = np.stack((time, means), axis=1)
         return brightness
 
-    def _data_to_xlsx(self, cellcount, sensordata, brightness, xlsxname):
+    def _data_to_xlsx(self, xlsxname):
         df = pd.DataFrame(
-            data=brightness,
-            columns=["Time (min) - imaging", "Image analysis (Scaled Brightness)"],
+            data=np.hstack((self.brightness, self.brightness_raw[:, 1].reshape(-1, 1))),
+            columns=[
+                "Time (min) - imaging",
+                "Image analysis (Scaled Brightness)",
+                "Image analysis (Unscaled Brightness)",
+            ],
         )
 
-        if not np.all(np.isnan(cellcount)):
-            df["Time (min) - cells"] = pd.Series(cellcount[:, 0])
-            df["Cell count (M cells/mL)"] = pd.Series(cellcount[:, 1])
+        if not np.all(np.isnan(self.cellcount)):
+            df["Time (min) - cells"] = pd.Series(self.cellcount[:, 0])
+            df["Cell count (M cells/mL)"] = pd.Series(self.cellcount[:, 1])
 
-        if not np.all(np.isnan(sensordata)):
-            df["Time (min) - sensor"] = pd.Series(sensordata[:, 0])
-            df["Sensor"] = pd.Series(sensordata[:, 1])
+        if not np.all(np.isnan(self.sensordata)):
+            df["Time (min) - sensor"] = pd.Series(self.sensordata[:, 0])
+            df["Sensor"] = pd.Series(self.sensordata[:, 1])
 
         df.to_excel(f"{self.out_folder}{os.sep}{xlsxname}", index=False)
