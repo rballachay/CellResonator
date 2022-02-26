@@ -6,6 +6,7 @@ Created on Sun Jun 13 12:08:37 2021
 @author: RileyBallachay
 """
 import os
+from typing import List, Tuple
 
 import cv2
 import numpy as np
@@ -45,10 +46,18 @@ class ResonatorPipeline:
         self.H = dims["H"]
         self.filename = filename
 
-    def run(self, cropped_vid=ENV.CROPPED_FILENAME):
+    def run(self, cropped_vid: str = ENV.CROPPED_FILENAME):
+
+        # run normalization (register, brightness)
         self.normalize_data()
 
-        return self.pipeline_main(cropped_vid)
+        # run the pipeline, write output video
+        slices = self._pipeline_main(cropped_vid)
+
+        # stack data and save
+        slice_path = self._stack_and_save(slices)
+
+        return slice_path
 
     def normalize_data(self):
         # get the 100 frame for registration and normalization
@@ -68,7 +77,7 @@ class ResonatorPipeline:
         # video and the target
         self._set_brightness_ratio(target_norm, basis_norm)
 
-    def _get_frame_100(self):
+    def _get_frame_100(self) -> np.array:
         # Grab the first frame from our reference photo
         vidcap = cv2.VideoCapture(self.video_path)
 
@@ -81,7 +90,9 @@ class ResonatorPipeline:
 
         return vid
 
-    def _norm_transform(self, image_new, image_basis):
+    def _norm_transform(
+        self, image_new: str, image_basis: str
+    ) -> Tuple[np.array, np.array]:
         # Convert images to grayscale
         im1Gray = cv2.GaussianBlur(
             cv2.cvtColor(image_new, cv2.COLOR_BGR2GRAY),
@@ -97,7 +108,7 @@ class ResonatorPipeline:
         )
         return im1Gray, im2Gray
 
-    def _get_homography(self, image_new, image_basis):
+    def _get_homography(self, image_new: np.array, image_basis: np.array):
         MAX_FEATURES = 2000
         GOOD_MATCH_PERCENT = 0.5
 
@@ -135,10 +146,24 @@ class ResonatorPipeline:
 
         # Find homography
         self.homography, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
-        return
+
+    def _warp_coordinates(self) -> Tuple[int, int, int, int]:
+        # this is the start, or the upper left corner of the mask
+        start = np.matmul(self.homography, np.array((self.Y, self.X, 0)))
+
+        # this is the bottom right corner of the mask
+        end = np.matmul(
+            self.homography, np.array((self.Y + self.H, self.X + self.W, 0))
+        )
+        return (
+            int(start[1]),
+            int(start[0]),
+            int(end[1] - start[1]),
+            int(end[0] - start[0]),
+        )
 
     def _set_brightness_ratio(
-        self, image_new, image_basis, h_chamber=int(ENV.H_CHAMBER)
+        self, image_new: str, image_basis: str, h_chamber=int(ENV.H_CHAMBER)
     ):
         # get the average chamber brightness
         target_mean = np.mean(
@@ -152,7 +177,7 @@ class ResonatorPipeline:
         )
         self.brightness_ratio = basis_mean / target_mean
 
-    def pipeline_main(self, cropped_vid):
+    def _pipeline_main(self, cropped_vid: str) -> List[np.array]:
 
         cap = cv2.VideoCapture(self.video_path)
 
@@ -189,30 +214,18 @@ class ResonatorPipeline:
             else:
                 break
 
-        sliced = np.stack(slices, axis=0)
-        sliced = self._grouped_avg(sliced)
-        np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
-
         cap.release()
         out.release()
+
+        return slices
+
+    def _stack_and_save(self, slices: List[np.array]) -> str:
+        def _grouped_avg(myArray, N=5):
+            result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
+            result[1:] = result[1:] - result[:-1]
+            return result
+
+        sliced = np.stack(slices, axis=0)
+        sliced = _grouped_avg(sliced)
+        np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
         return f"{self.out_folder}{os.sep}{self.filename}"
-
-    def _warp_coordinates(self):
-        # this is the start, or the upper left corner of the mask
-        start = np.matmul(self.homography, np.array((self.Y, self.X, 0)))
-
-        # this is the bottom right corner of the mask
-        end = np.matmul(
-            self.homography, np.array((self.Y + self.H, self.X + self.W, 0))
-        )
-        return (
-            int(start[1]),
-            int(start[0]),
-            int(end[1] - start[1]),
-            int(end[0] - start[0]),
-        )
-
-    def _grouped_avg(self, myArray, N=5):
-        result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
-        result[1:] = result[1:] - result[:-1]
-        return result

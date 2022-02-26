@@ -8,6 +8,7 @@ Created on Mon May 24 16:09:10 2021
 import bisect
 import os
 import warnings
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -77,7 +78,7 @@ class HistogramPipeline:
         if save:
             fig.savefig(f"{self.out_folder}{os.sep}{filename}")
 
-    def _plot_brightness(self, ax, brightness):
+    def _plot_brightness(self, ax: plt.Axes, brightness: np.array):
         (p1,) = ax.plot(
             brightness[:, 0],
             brightness[:, 1],
@@ -85,7 +86,7 @@ class HistogramPipeline:
             label="Predicted Cell Loss",
         )
 
-    def _plot_cellcount(self, ax, cellcount):
+    def _plot_cellcount(self, ax: plt.Axes, cellcount: np.array):
         ax2 = ax.twinx()
         ax2.set_ylabel("Downstream Cell Count", color="black", fontsize=10)
         (p2,) = ax2.plot(
@@ -95,7 +96,7 @@ class HistogramPipeline:
             label="Downstream Cell Count",
         )
 
-    def _plot_sensordata(self, ax, sensordata):
+    def _plot_sensordata(self, ax: plt.Axes, sensordata: np.array):
         ax3 = ax.twinx()
         ax3.set_ylabel("Sensor Measurements", color="grey", fontsize=10)
         (p3,) = ax3.plot(
@@ -108,7 +109,7 @@ class HistogramPipeline:
         )
         ax3.spines["right"].set_position(("outward", 70))
 
-    def _make_fig(self, title):
+    def _make_fig(self, title: str) -> Tuple[plt.Figure, plt.Axes]:
         fig, ax = plt.subplots(dpi=200)
         fig.set_figheight(5)
         fig.set_figwidth(12)
@@ -118,7 +119,13 @@ class HistogramPipeline:
         ax.set_ylabel("Average Brightness at Top of Frame", color="maroon", fontsize=10)
         return fig, ax
 
-    def _preproc_data(self, cellcount, sensordata, brightness, t_correct):
+    def _preproc_data(
+        self,
+        cellcount: np.array,
+        sensordata: np.array,
+        brightness: np.array,
+        t_correct: int,
+    ) -> Tuple[np.array, np.array, np.array]:
         cellcount, sensordata, brightness = self._fix_bounds(
             cellcount, sensordata, brightness
         )
@@ -127,7 +134,9 @@ class HistogramPipeline:
         )
         return cellcount, sensordata, brightness
 
-    def _fix_bounds(self, cellcount, sensordata, brightness):
+    def _fix_bounds(
+        self, cellcount: np.array, sensordata: np.array, brightness: np.array
+    ) -> Tuple[np.array, np.array, np.array]:
         if not np.all(np.isnan(cellcount)):
             data = cellcount
         elif not np.all(np.isnan(sensordata)):
@@ -143,7 +152,9 @@ class HistogramPipeline:
 
         return cellcount, sensordata, brightness[min_bright:max_bright]
 
-    def _t_correct(self, cellcount, sensordata, brightness, t_correct):
+    def _t_correct(
+        self, cellcount, sensordata: np.array, brightness: np.array, t_correct: np.array
+    ) -> Tuple[np.array, np.array, np.array]:
         _cellcount = cellcount.copy()
         _sensordata = sensordata.copy()
         _brightness = brightness.copy()
@@ -154,14 +165,16 @@ class HistogramPipeline:
         _brightness[:, 0] = _brightness[:, 0] / 60
         return _sensordata, _cellcount, _brightness
 
-    def _transform_brightness(self, brightness):
+    def _transform_brightness(self, brightness: np.array) -> np.array:
         _brightness = brightness.copy()
         _brightness[:, 1] = MinMaxScaler().fit_transform(
             scipy.ndimage.gaussian_filter1d(_brightness[:, 1], sigma=40).reshape(-1, 1)
         )[:, 0]
         return _brightness
 
-    def _read_sliced(self, path_sliced: str, window: tuple, avg_window: int = 5):
+    def _read_sliced(
+        self, path_sliced: str, window: tuple, avg_window: int = 5
+    ) -> np.array:
         sliced = np.loadtxt(path_sliced, delimiter=",")
         means = sliced[:, window[0] : window[1]].mean(axis=1)[::avg_window]
         time = (
@@ -173,7 +186,7 @@ class HistogramPipeline:
         brightness = np.stack((time, means), axis=1)
         return brightness
 
-    def _data_to_xlsx(self, xlsxname):
+    def _data_to_xlsx(self, xlsxname: str):
         df = pd.DataFrame(
             data=np.hstack((self.brightness, self.brightness_raw[:, 1].reshape(-1, 1))),
             columns=[
