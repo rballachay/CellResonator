@@ -28,6 +28,7 @@ class HistogramPipeline:
         window: tuple = (25, 100),
         t_correct: int = 50,
         xlsxname: bool = ENV.XLSX,
+        fps: float = ENV.ENV.TIME_PER_FRAME,
     ):
         if out_folder is None:
             out_folder = f"{os.sep.join(path_sliced.split(os.sep)[:-1])}{os.sep}results"
@@ -158,7 +159,7 @@ class HistogramPipeline:
         means = sliced[:, window[0] : window[1]].mean(axis=1)[::avg_window]
         time = (
             np.linspace(0, len(means), len(means))
-            * float(ENV.TIME_PER_FRAME)
+            * float(self.fps)
             * float(ENV.SLICE_FREQUENCY)
             * avg_window
         )
@@ -168,15 +169,15 @@ class HistogramPipeline:
     def _data_to_xlsx(self, cellcount, sensordata, brightness, xlsxname):
         df = pd.DataFrame(
             data=brightness,
-            columns=["Time (s) - imaging", "Image analysis (Scaled Brightness)"],
+            columns=["Time (min) - imaging", "Image analysis (Scaled Brightness)"],
         )
 
         if not np.all(np.isnan(cellcount)):
-            df["Time (s) - cells"] = pd.Series(cellcount[:, 0])
+            df["Time (min) - cells"] = pd.Series(cellcount[:, 0])
             df["Cell count (M cells/mL)"] = pd.Series(cellcount[:, 1])
 
         if not np.all(np.isnan(sensordata)):
-            df["Time (s) - sensor"] = pd.Series(sensordata[:, 0])
+            df["Time (min) - sensor"] = pd.Series(sensordata[:, 0])
             df["Sensor"] = pd.Series(sensordata[:, 1])
 
         df.to_excel(f"{self.out_folder}{os.sep}{xlsxname}", index=False)

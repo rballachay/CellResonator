@@ -123,7 +123,7 @@ class ResonatorPipeline:
         cap = cv2.VideoCapture(self.video_path)
 
         # Some characteristics from the original video
-        fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.fps, frames = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
         # output
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -131,7 +131,7 @@ class ResonatorPipeline:
         out = cv2.VideoWriter(
             f"{self.out_folder}{os.sep}{cropped_vid}",
             fourcc,
-            fps,
+            self.fps,
             (W, H),
         )
 
