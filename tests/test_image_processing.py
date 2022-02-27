@@ -1,7 +1,7 @@
 import os
 
 from src.config import ENV
-from src.resonator_pipeline import ResonatorPipeline
+from src.core.resonator_pipeline import ResonatorPipeline
 
 FOLDER = f"tests{os.sep}data{os.sep}test_folder_2files"
 VID_PATH = f"{FOLDER}{os.sep}vid_Washing.mp4"

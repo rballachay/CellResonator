@@ -2,12 +2,11 @@ import os
 
 from moviepy.editor import VideoFileClip
 from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
-
 from src.config import ENV
-from src.histogram_pipeline import HistogramPipeline
-from src.process import process_config
-from src.resonator_pipeline import ResonatorPipeline
-from src.utils import check_dir_make
+from src.core.histogram_pipeline import HistogramPipeline
+from src.core.resonator_pipeline import ResonatorPipeline
+from src.extra.tools import check_dir_make
+from src.run.process import process_config
 
 
 def pipeline(
@@ -44,7 +43,7 @@ def _run_pipeline(
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
-    xlsxname: str = ENV.XLSX,
+    xlsxname: str = ENV.RESULTS_DATA,
     cropped_vid: str = ENV.CROPPED_FILENAME,
 ):
 

@@ -10,10 +10,9 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
-
 from src.config import ENV
-from src.resize import get_downscaled_video
-from src.utils import check_dir_make
+from src.extra.tools import check_dir_make
+from src.run.resize import get_downscaled_video
 
 
 class ResonatorPipeline:

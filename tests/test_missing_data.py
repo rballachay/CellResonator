@@ -3,8 +3,8 @@ import os
 
 import pandas as pd
 from pandas._testing import assert_frame_equal
-from src.pipeline import pipeline
-from src.process import process_config
+from src.run.pipeline import pipeline
+from src.run.process import process_config
 
 FOLDER = f"tests{os.sep}data{os.sep}sample_missing"
 

@@ -2,7 +2,7 @@ import os
 import shutil
 
 from src.config import ENV
-from src.histogram_pipeline import HistogramPipeline
+from src.core.histogram_pipeline import HistogramPipeline
 
 
 def test_histogram_pipeline(load_result_data):

@@ -2,9 +2,9 @@ import os
 import warnings
 
 from src.config import ENV
-from src.histogram_pipeline import HistogramPipeline
-from src.process import get_video
-from src.resonator_pipeline import ResonatorPipeline
+from src.core.histogram_pipeline import HistogramPipeline
+from src.core.resonator_pipeline import ResonatorPipeline
+from src.run.process import get_video
 
 
 def workflow1(

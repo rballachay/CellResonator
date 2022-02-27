@@ -7,8 +7,8 @@ Created on Tue Dec  7 18:42:09 2021
 """
 import click
 
-from src.pipeline import pipeline
-from src.workflows import workflow1
+from src.extra.workflows import workflow1
+from src.run.pipeline import pipeline
 
 FN_MAP = {
     "default": pipeline,

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from src.read_excel import ReadExcel
+from src.core.read_excel import ReadExcel
 
 
 class FileException(Exception):

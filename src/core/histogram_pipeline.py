@@ -16,8 +16,8 @@ import pandas as pd
 import scipy.ndimage
 from sklearn.preprocessing import MinMaxScaler
 
-from .config import ENV
-from .utils import check_dir_make
+from ..config import ENV
+from ..extra.tools import check_dir_make
 
 
 class HistogramPipeline:
@@ -28,7 +28,7 @@ class HistogramPipeline:
         out_folder: str = None,
         window: tuple = (25, 100),
         t_correct: int = 50,
-        xlsxname: bool = ENV.XLSX,
+        xlsxname: bool = ENV.RESULTS_DATA,
         fps: float = ENV.TIME_PER_FRAME,
     ):
         self.fps = fps
@@ -180,7 +180,7 @@ class HistogramPipeline:
         time = (
             np.linspace(0, len(means), len(means))
             * float(self.fps)
-            * float(ENV.SLICE_FREQUENCY)
+            * float(ENV.SLICE_FREQ)
             * avg_window
         )
         brightness = np.stack((time, means), axis=1)

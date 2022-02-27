@@ -1,7 +1,7 @@
 import os
 
 from src.config import ENV
-from src.pipeline import pipeline
+from src.run.pipeline import pipeline
 
 FOLDER = f"tests{os.sep}data{os.sep}test_folder_conc"
 

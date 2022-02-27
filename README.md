@@ -146,4 +146,18 @@ pytest tests
 
 ## Help/Troubleshooting
 
+The majority of this pipeline is built off of a [single reference stored](data/basis.jpg) in data. It is very likely that if the setup of the camera or resonator is changed significantly, this pipeline will no longer work. To change the basis so that the pipeline works, one must change the basis photo and the coordinates of the resonator in the .env file. The meaning of coordinates X, Y, H and W are shown below. 
+
+![](docs/basis_coords_ex.jpg)
+
+In order to import a new photo and reset the coordinates, please run the following command from the command line:
+
+```bash
+python -m reset -b path/to/newbasisimage.jpg
+```
+
+This will create an interactive window where you can change the basis image and the coordinates in the .env file. Please draw the ROI according to the sample image provided above. In order to reset all drawn ROI's on the image, right click on the interactive window. To exit and save the latest ROI, press Q. 
+
+_Note that this has not yet been adapted to work in Docker_
+
 For more information, or to report a bug, email developer at riley.ballachay@gmail.com
