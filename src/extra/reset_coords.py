@@ -72,7 +72,16 @@ class BoundingBoxWidget(object):
         print("In order to clear all ROI's on the image, right click on the mouse")
 
 
-def reset_env_coords(x, y, w, h):
+def reset_basis(coords, new_image):
+    _reset_env_coords(*coords)
+    _change_basis(new_image)
+
+
+def _reset_env_coords(x, y, w, h):
+    """Open up the environment variable file 
+    and reset the coordinates after selecting
+    with interactive class.
+    """
     with open(".env", "r") as file:
         data = file.readlines()
     for i, line in enumerate(data):
@@ -90,7 +99,11 @@ def reset_env_coords(x, y, w, h):
         file.writelines(data)
 
 
-def change_basis(new_image):
+def _change_basis(new_image):
+    """Reset the basis image based on the new 
+    coordinates selected using the interactive
+    class. 
+    """
     num = 0
     while True:
         try:

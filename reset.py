@@ -1,7 +1,7 @@
 import click
 import cv2
 
-from src.extra.reset_coords import BoundingBoxWidget, change_basis, reset_env_coords
+from src.extra.reset_coords import BoundingBoxWidget, reset_basis
 
 
 @click.command()
@@ -19,8 +19,7 @@ def main(basis_image):
 
         if key == ord("q"):
             cv2.destroyAllWindows()
-            reset_env_coords(*bbx_wid.coords())
-            change_basis(basis_image)
+            reset_basis(bbx_wid.coords(), basis_image)
             exit(1)
 
 
