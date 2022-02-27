@@ -156,6 +156,12 @@ To reset the basis image, a new basis video needs to be selected, and the coordi
 python -m reset -b path/to/newbasisvideo.mp4
 ```
 
+Alternatively, you can also just use the folder in which the video is stored. If there is more than 1 video, it will select the first and return it. 
+
+```bash
+python -m reset -b path/to/newbasisvideofolder/
+```
+
 This will first extract the 100th frame of the video as the basis image, create an interactive window where you can change the basis image and change the coordinates in the .env file. Please draw the ROI according to the sample image provided above. In order to reset all drawn ROI's on the image, right click on the interactive window. To exit and save the latest ROI, press Q. Note that this does not delete the latest basis image. It will rename it using the lowest integer possible (i.e. basis0.jpg), given that it won't overwrite another image. 
 
 _Note that this has not yet been adapted to work in Docker_
