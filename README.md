@@ -150,13 +150,13 @@ The majority of this pipeline is built off of a [single reference image](data/ba
 
 ![](data/basis_coords_ex.jpeg)
 
-In order to import a new photo and reset the coordinates, please run the following command from the command line:
+To reset the basis image, a new basis video needs to be selected, and the coordiantes of the new ROI drawn on top. To run this module, please run the following command from the command line:
 
 ```bash
-python -m reset -b path/to/newbasisimage.jpg
+python -m reset -b path/to/newbasisvideo.mp4
 ```
 
-This will create an interactive window where you can change the basis image and the coordinates in the .env file. Please draw the ROI according to the sample image provided above. In order to reset all drawn ROI's on the image, right click on the interactive window. To exit and save the latest ROI, press Q. Note that this does not delete the latest basis image. It will rename it using the lowest integer possible (i.e. basis0.jpg), given that it won't overwrite another image. 
+This will first extract the 100th frame of the video as the basis image, create an interactive window where you can change the basis image and change the coordinates in the .env file. Please draw the ROI according to the sample image provided above. In order to reset all drawn ROI's on the image, right click on the interactive window. To exit and save the latest ROI, press Q. Note that this does not delete the latest basis image. It will rename it using the lowest integer possible (i.e. basis0.jpg), given that it won't overwrite another image. 
 
 _Note that this has not yet been adapted to work in Docker_
 

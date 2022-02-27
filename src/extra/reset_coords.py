@@ -1,13 +1,13 @@
 import os
-import re
 import shutil
 
 import cv2
+import numpy as np
 
 
 class BoundingBoxWidget(object):
-    def __init__(self, image):
-        self.original_image = cv2.imread(image)
+    def __init__(self, video):
+        self.original_image = self._get_basis_image(video)
         self.clone = self.original_image.copy()
 
         cv2.namedWindow("image")
@@ -71,6 +71,17 @@ class BoundingBoxWidget(object):
         )
         print("In order to clear all ROI's on the image, right click on the mouse")
 
+    def _get_basis_image(self, basis_video) -> np.array:
+        # Grab the first frame from our reference photo
+        vidcap = cv2.VideoCapture(basis_video)
+        # take 100th frame to avoid issues with reading
+        # first frame
+        for _ in range(100):
+            success, vid = vidcap.read()
+        if not success:
+            raise Exception(f"Error reading 10th frame from path {basis_video}")
+        return vid
+
 
 def reset_basis(coords, new_image):
     _reset_env_coords(*coords)
@@ -78,7 +89,7 @@ def reset_basis(coords, new_image):
 
 
 def _reset_env_coords(x, y, w, h):
-    """Open up the environment variable file 
+    """Open up the environment variable file
     and reset the coordinates after selecting
     with interactive class.
     """
@@ -100,15 +111,17 @@ def _reset_env_coords(x, y, w, h):
 
 
 def _change_basis(new_image):
-    """Reset the basis image based on the new 
+    """Reset the basis image based on the new
     coordinates selected using the interactive
-    class. 
+    class.
     """
     num = 0
     while True:
-        try:
+        new = f"data/basis{num}.jpg"
+        if os.path.exists(new):
+            num += 1
+            continue
+        else:
             os.rename("data/basis.jpg", f"data/basis{num}.jpg")
             break
-        except:
-            num += 1
-    shutil.copyfile(new_image, "data/basis.jpg")
+    cv2.imwrite("data/basis.jpg", new_image)
