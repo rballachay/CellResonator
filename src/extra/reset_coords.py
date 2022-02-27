@@ -1,5 +1,4 @@
 import os
-import shutil
 
 import cv2
 import numpy as np
@@ -7,6 +6,7 @@ import numpy as np
 
 class BoundingBoxWidget(object):
     def __init__(self, video):
+        video = self._check_video(video)
         self.original_image = self._get_basis_image(video)
         self.clone = self.original_image.copy()
 
@@ -16,7 +16,7 @@ class BoundingBoxWidget(object):
         # Bounding box reference points
         self.image_coordinates = []
 
-        self._warn()
+        self._info()
 
     def extract_coordinates(self, event, x, y, flags, parameters):
         # Record starting (x,y) coordinates on left mouse button click
@@ -64,12 +64,23 @@ class BoundingBoxWidget(object):
         h = self.image_coordinates[1][1] - self.image_coordinates[0][1]
         return x, y, w, h
 
-    def _warn(self):
+    def _info(self):
         print("Please draw the ROI for the resonator")
         print(
             "Once the ROI is correct, please press q on the keyboard, and the .env variables will be changed"
         )
         print("In order to clear all ROI's on the image, right click on the mouse")
+
+    def _check_video(self, video):
+        if video.endswith(".mp4"):
+            return video
+        elif os.path.isdir(video):
+            for file in os.listdir(video):
+                if file.endswith(".mp4"):
+                    return os.path.join(video, file)
+            raise Exception("There are no videos in this folder")
+        else:
+            raise Exception("Uknown file extention, please use folder or video")
 
     def _get_basis_image(self, basis_video) -> np.array:
         # Grab the first frame from our reference photo

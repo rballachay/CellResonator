@@ -9,7 +9,7 @@ from src.extra.reset_coords import BoundingBoxWidget, reset_basis
     "-b",
     "basis_video",
     prompt=False,
-    help="video to use to reset environment variables",
+    help="video to use to reset environment variables, or folder with video",
 )
 def main(basis_video):
     bbx_wid = BoundingBoxWidget(basis_video)
