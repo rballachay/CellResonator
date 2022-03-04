@@ -12,7 +12,7 @@ def workflow1(
     basis_image: str = ENV.BASIS_IMAGE,
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     filename: str = ENV.SLICED_FILENAME,
-    xlsxname: str = ENV.XLSX,
+    xlsxname: str = ENV.RESULTS_DATA,
     cropped_vid: str = ENV.CROPPED_FILENAME,
 ):
 
