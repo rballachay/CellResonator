@@ -15,6 +15,9 @@ def workflow1(
     xlsxname: str = ENV.RESULTS_DATA,
     cropped_vid: str = ENV.CROPPED_FILENAME,
 ):
+    """Workflow for running on single video in a folder, and outputting the
+    results as an xlsx file to get brightness.
+    """
 
     vids = get_video(inlet)
     warnings.warn(

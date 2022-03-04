@@ -16,14 +16,30 @@ def pipeline(
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
 ):
+    """Run the main pipeline for image processing, including video splitting,
+    and actual video pipeline, which includes extracting brightness data from the
+    video and plotting data alongside cell counts
+    """
+
+    # process config, aka get data dictionary with video and cell counts
     data_items = process_config(inlet)
 
+    # iterate over each item in data items and run pipeline
     for data_type in data_items:
+
+        # for total video, need to first split
+        # videos, then run each individually
         if data_type == "total":
             total_video_pipeline(
-                inlet, data_items, basis_image, dims, plot_name, filename
+                inlet,
+                data_items,
+                basis_image,
+                dims,
+                plot_name,
+                filename,
             )
         else:
+            # standard pipeline to run
             _run_pipeline(
                 data_items[data_type],
                 data_type,
@@ -76,9 +92,19 @@ def total_video_pipeline(
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
 ):
+    """In the case that a video of the total workflow is provided, then
+    the data needs to be separated into concentration and washing so
+    that it is processed in the same manner as individual videos.
+    """
 
-    targets = total_video_splitter(data_dict["total"])
+    # get info about where to split dataframe
+    target_dat = _split_data(data_dict["total"])
 
+    # split video into parts and save
+    targets = {dat[0]: _split_video(data_dict["video"], dat) for dat in target_dat}
+
+    # create dictionaries in form of concentration/washing
+    # then run regular pipeline
     for title in ("concentration", "washing"):
         _data_dict_tmp = {}
         _data_dict_tmp["video"] = targets[title]
@@ -89,19 +115,19 @@ def total_video_pipeline(
         )
 
 
-def total_video_splitter(
-    data_dict: dict,
-):
+def _split_data(data_dict: dict) -> tuple:
     """HistogramPipeline is only set up to do a single phase - be that
     concentration or washing. In order to run a "total video" need to
     split the sliced array into two parts - one for concentration and
     one for washing.
     """
 
+    # make dictionary out of dataframe ref_data which
+    # includes important info about start & stop of vid
     ref_dat = data_dict["data"]["reference"]["data"]
     ref_dict = dict(zip(ref_dat["index"], ref_dat.value))
 
-    rng_dat = (
+    return (
         ("concentration", (0, ref_dict["End of concentration"])),
         (
             "washing",
@@ -112,14 +138,11 @@ def total_video_splitter(
         ),
     )
 
-    targets = {}
-    for dat in rng_dat:
-        targets[dat[0]] = _split_video(data_dict["video"], dat)
 
-    return targets
-
-
-def _split_video(vid_path, rng_dat):
+def _split_video(vid_path: str, rng_dat: tuple) -> str:
+    """Split video according to data provided in
+    rng_dat, saving each in the input folder.
+    """
     vid_i = os.sep.join(vid_path.split(os.sep)[:-1])
     vid_n = vid_path.split(os.sep)[-1]
     targetname = f"{vid_i}{os.sep}split_vids{os.sep}{rng_dat[0]}_{vid_n}"
