@@ -97,11 +97,8 @@ def total_video_pipeline(
     that it is processed in the same manner as individual videos.
     """
 
-    # get info about where to split dataframe
-    target_dat = _split_data(data_dict["total"])
-
     # split video into parts and save
-    targets = {dat[0]: _split_video(data_dict["video"], dat) for dat in target_dat}
+    targets = total_video_splitter(data_dict["total"])
 
     # create dictionaries in form of concentration/washing
     # then run regular pipeline
@@ -113,6 +110,11 @@ def total_video_pipeline(
         _run_pipeline(
             _data_dict_tmp, title, inlet, basis_image, dims, plot_name, filename
         )
+
+
+def total_video_splitter(data_dict):
+    target_dat = _split_data(data_dict["total"])
+    return {dat[0]: _split_video(data_dict["video"], dat) for dat in target_dat}
 
 
 def _split_data(data_dict: dict) -> tuple:
