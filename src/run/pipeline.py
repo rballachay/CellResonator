@@ -98,7 +98,7 @@ def total_video_pipeline(
     """
 
     # split video into parts and save
-    targets = total_video_splitter(data_dict["total"])
+    targets = total_video_splitter(data_dict)
 
     # create dictionaries in form of concentration/washing
     # then run regular pipeline
