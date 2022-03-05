@@ -112,24 +112,19 @@ def total_video_pipeline(
         )
 
 
-def total_video_splitter(data_dict):
-    target_dat = _split_data(data_dict["total"])
-    return {dat[0]: _split_video(data_dict["video"], dat) for dat in target_dat}
-
-
-def _split_data(data_dict: dict) -> tuple:
+def total_video_splitter(
+    data_dict: dict,
+):
     """HistogramPipeline is only set up to do a single phase - be that
     concentration or washing. In order to run a "total video" need to
     split the sliced array into two parts - one for concentration and
     one for washing.
     """
 
-    # make dictionary out of dataframe ref_data which
-    # includes important info about start & stop of vid
     ref_dat = data_dict["data"]["reference"]["data"]
     ref_dict = dict(zip(ref_dat["index"], ref_dat.value))
 
-    return (
+    rng_dat = (
         ("concentration", (0, ref_dict["End of concentration"])),
         (
             "washing",
@@ -139,6 +134,12 @@ def _split_data(data_dict: dict) -> tuple:
             ),
         ),
     )
+
+    targets = {}
+    for dat in rng_dat:
+        targets[dat[0]] = _split_video(data_dict["video"], dat)
+
+    return targets
 
 
 def _split_video(vid_path: str, rng_dat: tuple) -> str:
