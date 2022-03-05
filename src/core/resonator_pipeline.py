@@ -29,6 +29,7 @@ class ResonatorPipeline:
         },
         filename: str = ENV.SLICED_FILENAME,
         downsize: bool = False,
+        slice_freq: int = int(ENV.SLICE_FREQ),
     ):
         # video is unnecessarily big in native format
         self.video_path = get_downscaled_video(video_path, downsize)
@@ -44,6 +45,7 @@ class ResonatorPipeline:
         self.W = dims["W"]
         self.H = dims["H"]
         self.filename = filename
+        self.slice_freq = slice_freq
 
     def run(self, cropped_vid: str = ENV.CROPPED_FILENAME):
 
@@ -205,9 +207,11 @@ class ResonatorPipeline:
                 crop_frame = frame[
                     self.Y : self.Y + self.H, self.X : self.X + self.W, :
                 ]
+
                 imageGREY = crop_frame.mean(axis=2)
-                image_norm = imageGREY * self.brightness_ratio
-                slices.append(image_norm.mean(axis=1))
+                mean_xaxis = imageGREY.mean(axis=1) * self.brightness_ratio
+                norm_sum = self._grouped_avg(mean_xaxis)
+                slices.append(norm_sum)
 
                 out.write(crop_frame)
             else:
@@ -219,12 +223,13 @@ class ResonatorPipeline:
         return slices
 
     def _stack_and_save(self, slices: List[np.array]) -> str:
-        def _grouped_avg(myArray, N=5):
-            result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
-            result[1:] = result[1:] - result[:-1]
-            return result
-
         sliced = np.stack(slices, axis=0)
-        sliced = _grouped_avg(sliced)
+        sliced = self._grouped_avg(sliced)
         np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
         return f"{self.out_folder}{os.sep}{self.filename}"
+
+    def _grouped_avg(self, myArray):
+        N = self.slice_freq
+        result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
+        result[1:] = result[1:] - result[:-1]
+        return result

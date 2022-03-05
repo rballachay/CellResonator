@@ -75,7 +75,7 @@ def _run_pipeline(
         path,
         data_dict["data"][data_type],
         xlsxname=f"{data_type}_{xlsxname}",
-        fps=rsp.fps,
+        s_per_frame=1 / rsp.fps,
     )
     htp.plot(
         title=f"Histogram for {data_type.capitalize()}",
