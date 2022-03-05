@@ -77,24 +77,26 @@ def _get_video_name(path: str, title: str) -> str:
     raise FileException("no 'Concentration'/'Washing'", "videos", path)
 
 
-def _make_data_dictionary(title: str, xlsx: dict, data_dict={}) -> dict:
+def _make_data_dictionary(title: str, xlsx: dict) -> dict:
     """Make dictionary of data using dictionary created
     using XLSX reader utility.
     """
-
-    def _get_data(title: str, xlsx: dict, sensor_data={}) -> dict:
-        for xl_title in xlsx:
-            stage, sensor = xl_title.split("_")
-            if stage == title:
-                sensor_data[sensor] = xlsx[xl_title]
-        return sensor_data
-
+    data_dict = {}
     if title == "total":
         for title in ["concentration", "washing", "reference"]:
             data_dict[title] = _get_data(title, xlsx)
     else:
         data_dict[title] = _get_data(title, xlsx)
     return data_dict
+
+
+def _get_data(title: str, xlsx: dict) -> dict:
+    sensor_data = {}
+    for xl_title in xlsx:
+        stage, sensor = xl_title.split("_")
+        if stage == title:
+            sensor_data[sensor] = xlsx[xl_title]
+    return sensor_data
 
 
 def _check_file_naming(vid_title: str) -> str:
@@ -115,7 +117,11 @@ def get_video(path: str, video_name: str = ".mp4") -> list:
     to all videos.
     """
     vids = [v for v in os.listdir(path) if video_name in v]
-    return [f"{path}{os.sep}{v}" for v in vids]
+    return [
+        f"{path}{os.sep}{v}"
+        for v in vids
+        if all([i not in v for i in ("small", "result")])
+    ]
 
 
 def count_vid_files(inlet: str) -> int:
