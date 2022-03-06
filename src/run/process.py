@@ -42,7 +42,7 @@ def process_config(inlet: str):
     else:
         raise FileException("no", "video", inlet)
 
-    return data_items
+    return data_items, _get_wash_start(xlsx)
 
 
 def _process_two_videos(inlet: str, xlsx: dict, data_items: dict) -> dict:
@@ -108,9 +108,9 @@ def _check_file_naming(vid_title: str) -> str:
     the video is, to determine if it is
     concentration, washing or other
     """
-    if "Concentration" in vid_title:
+    if "concentration" in vid_title.lower():
         return "concentration"
-    elif "Washing" in vid_title:
+    elif "washing" in vid_title.lower():
         return "washing"
     else:
         return "total"
@@ -161,3 +161,8 @@ def _check_results_folder(inlet: str):
                 i += 1
                 continue
             break
+
+
+def _get_wash_start(xlsx: dict) -> float:
+    ref = xlsx["reference_data"]
+    return float(ref[ref["index"] == "Start of washing"].value)

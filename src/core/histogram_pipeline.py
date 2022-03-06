@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.ndimage
-from sklearn.preprocessing import MinMaxScaler
 
 from ..config import ENV
 from ..extra.tools import check_dir_make
@@ -45,8 +44,10 @@ class HistogramPipeline:
         t_correct: int = 50,
         xlsxname: bool = ENV.RESULTS_DATA,
         s_per_frame: float = ENV.TIME_PER_FRAME,
+        vid_start: float = 0.0,
     ):
         self.s_per_frame = s_per_frame
+        self.vid_start = vid_start
 
         # if out_folder not set, create results folder in input folder
         if out_folder is None:
@@ -152,11 +153,12 @@ class HistogramPipeline:
         1. Fix bounds - remove excess brightness data
         2. Correct time from minutes to seconds, add delay
         """
-        cellcount, sensordata, brightness = self._fix_bounds(
-            cellcount, sensordata, brightness
-        )
         cellcount, sensordata, brightness = self._t_correct(
             cellcount, sensordata, brightness, t_correct
+        )
+
+        cellcount, sensordata, brightness = self._fix_bounds(
+            cellcount, sensordata, brightness
         )
         return cellcount, sensordata, brightness
 
@@ -181,8 +183,8 @@ class HistogramPipeline:
             )
             return cellcount, sensordata, brightness
 
-        min_bright = bisect.bisect_right(brightness[:, 0], data[0, 0])
-        max_bright = bisect.bisect_left(brightness[:, 0], data[-1, 0])
+        min_bright = bisect.bisect(brightness[:, 0], data[0, 0])
+        max_bright = bisect.bisect(brightness[:, 0], data[-1, 0])
 
         return cellcount, sensordata, brightness[min_bright:max_bright]
 
@@ -203,10 +205,11 @@ class HistogramPipeline:
             cellcount[:, 0] = (cellcount[:, 0] - t_correct) / 60
         if not np.all(np.isnan(sensordata)):
             sensordata[:, 0] = (sensordata[:, 0] - t_correct) / 60
-        brightness[:, 0] = brightness[:, 0] / 60
+        brightness[:, 0] = (brightness[:, 0] + self.vid_start) / 60
         return cellcount, sensordata, brightness
 
     def _transform_brightness(self, brightness: np.array) -> np.array:
+        brightness = brightness.copy()
         brightness[:, 1] = scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=60)
         return brightness
 

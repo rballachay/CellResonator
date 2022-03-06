@@ -22,7 +22,7 @@ def pipeline(
     """
 
     # process config, aka get data dictionary with video and cell counts
-    data_items = process_config(inlet)
+    data_items, wash_start = process_config(inlet)
 
     # iterate over each item in data items and run pipeline
     for data_type in data_items:
@@ -37,17 +37,19 @@ def pipeline(
                 dims,
                 plot_name,
                 filename,
+                wash_start=wash_start,
             )
         else:
             # standard pipeline to run
             _run_pipeline(
-                data_items[data_type],
+                data_items,
                 data_type,
                 inlet,
                 basis_image,
                 dims,
                 plot_name,
                 filename,
+                wash_start=wash_start,
             )
 
 
@@ -61,10 +63,10 @@ def _run_pipeline(
     filename: str = ENV.SLICED_FILENAME,
     xlsxname: str = ENV.RESULTS_DATA,
     cropped_vid: str = ENV.CROPPED_FILENAME,
+    wash_start: float = 0.0,
 ):
-
     rsp = ResonatorPipeline(
-        data_dict["video"],
+        data_dict[data_type]["video"],
         basis_image=basis_image,
         dims=dims,
         filename=f"{data_type}_{filename}",
@@ -73,9 +75,10 @@ def _run_pipeline(
 
     htp = HistogramPipeline(
         path,
-        data_dict["data"][data_type],
+        data_dict[data_type]["data"][data_type],
         xlsxname=f"{data_type}_{xlsxname}",
         s_per_frame=1 / rsp.fps,
+        vid_start=wash_start if data_type == "washing" else 0.0,
     )
     htp.plot(
         title=f"Histogram for {data_type.capitalize()}",
@@ -91,6 +94,7 @@ def total_video_pipeline(
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
+    wash_start: float = 0.0,
 ):
     """In the case that a video of the total workflow is provided, then
     the data needs to be separated into concentration and washing so
@@ -108,7 +112,14 @@ def total_video_pipeline(
         _data_dict_tmp["data"] = data_dict["total"]["data"]
 
         _run_pipeline(
-            _data_dict_tmp, title, inlet, basis_image, dims, plot_name, filename
+            _data_dict_tmp,
+            title,
+            inlet,
+            basis_image,
+            dims,
+            plot_name,
+            filename,
+            wash_start=wash_start,
         )
 
 
