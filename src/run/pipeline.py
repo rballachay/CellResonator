@@ -42,7 +42,7 @@ def pipeline(
         else:
             # standard pipeline to run
             _run_pipeline(
-                data_items,
+                data_items[data_type],
                 data_type,
                 inlet,
                 basis_image,
@@ -66,7 +66,7 @@ def _run_pipeline(
     wash_start: float = 0.0,
 ):
     rsp = ResonatorPipeline(
-        data_dict[data_type]["video"],
+        data_dict["video"],
         basis_image=basis_image,
         dims=dims,
         filename=f"{data_type}_{filename}",
@@ -75,7 +75,7 @@ def _run_pipeline(
 
     htp = HistogramPipeline(
         path,
-        data_dict[data_type]["data"][data_type],
+        data_dict["data"][data_type],
         xlsxname=f"{data_type}_{xlsxname}",
         s_per_frame=1 / rsp.fps,
         vid_start=wash_start if data_type == "washing" else 0.0,
