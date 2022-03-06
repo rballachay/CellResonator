@@ -29,6 +29,10 @@ def process_config(inlet: str):
     # count the number of video files in inlet
     n = count_vid_files(inlet)
 
+    # check if results folder exists. if it does,
+    # rename to results_int
+    _check_results_folder(inlet)
+
     if n == 1:
         data_items = _process_one_video(inlet, xlsx, {})
     elif n == 2:
@@ -128,16 +132,32 @@ def count_vid_files(inlet: str) -> int:
     return len(get_video(inlet))
 
 
-def _get_xlsx_reader(path: str, video_name: str = "*") -> dict:
+def _get_xlsx_reader(path: str, xlsx_name: str = ".xlsx") -> dict:
     """Checks all the files on path to determine if any is
     an xlsx, then create a dictionary out of the xlsx data
     """
-    glob_path = Path(f"{path}{os.sep}")
-    xlsx_list = [str(pp) for pp in glob_path.glob(f"**{os.sep}{video_name}.xlsx")]
-
+    xlsx_list = [f"{path}{os.sep}{v}" for v in os.listdir(path) if xlsx_name in v]
     if len(xlsx_list) > 1:
         raise FileException("too many", "xlsx files", path)
     elif len(xlsx_list) < 1:
         raise FileException("too few", "xlsx files", path)
 
     return ReadExcel(xlsx_list[0]).run()
+
+
+def _check_results_folder(inlet: str):
+    """Don't want to overwrite results folders,
+    so this will rename results to the lowest
+    possible integer, i.e. results_1, to open
+    up space for new results folder
+    """
+    res = f"{inlet}{os.sep}results"
+    if os.path.isdir(res):
+        i = 1
+        while True:
+            try:
+                os.rename(res, f"{res}_{i}")
+            except:
+                i += 1
+                continue
+            break

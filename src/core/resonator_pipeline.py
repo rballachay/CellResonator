@@ -97,13 +97,13 @@ class ResonatorPipeline:
         # Convert images to grayscale
         im1Gray = cv2.GaussianBlur(
             cv2.cvtColor(image_new, cv2.COLOR_BGR2GRAY),
-            ksize=(5, 5),
+            ksize=(3, 3),
             sigmaX=3,
             sigmaY=3,
         )
         im2Gray = cv2.GaussianBlur(
             cv2.cvtColor(image_basis, cv2.COLOR_RGB2GRAY),
-            ksize=(5, 5),
+            ksize=(3, 3),
             sigmaX=3,
             sigmaY=3,
         )
