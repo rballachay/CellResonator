@@ -31,7 +31,7 @@ def make_process_config_conc(cleaning, file=FOLDER):
 
 def test_process_config_conc(cleaning, file=FOLDER):
     cleaning(file)
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
 

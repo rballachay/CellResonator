@@ -15,7 +15,7 @@ TEST_CONC = f"tests{os.sep}data{os.sep}test_folder_conc"
 
 
 def make_process_config_2files(file=TEST_2FILES):
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
 
     for key_1 in data_items:
         for key_2 in data_items[key_1]["data"]:
@@ -30,7 +30,7 @@ def make_process_config_2files(file=TEST_2FILES):
 
 def test_process_config_2files(cleaning, file=TEST_2FILES):
     cleaning(file)
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
 
@@ -53,7 +53,7 @@ def test_process_config_2files(cleaning, file=TEST_2FILES):
 
 
 def make_process_config_1files(file=TEST_1FILE):
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
 
     conc_wash = data_items["total"]["data"]
     for key_1 in conc_wash:
@@ -68,7 +68,7 @@ def make_process_config_1files(file=TEST_1FILE):
 def test_process_config_1files(cleaning, file=TEST_1FILE):
     cleaning(file)
 
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
 
@@ -90,7 +90,7 @@ def test_process_config_1files(cleaning, file=TEST_1FILE):
 
 
 def make_process_config_conc(file=TEST_CONC):
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
 
     conc_wash = data_items["concentration"]["data"]
     for key_1 in conc_wash:
@@ -105,7 +105,7 @@ def make_process_config_conc(file=TEST_CONC):
 def test_process_config_conc(cleaning, file=TEST_CONC):
     cleaning(file)
 
-    data_items = process_config(file)
+    data_items, _ = process_config(file)
     with open(f"{file}{os.sep}result.json", "r") as fp:
         data_items_basis = json.load(fp)
 
