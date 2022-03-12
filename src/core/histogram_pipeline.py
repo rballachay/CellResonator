@@ -42,7 +42,7 @@ class HistogramPipeline:
         out_folder: str = None,
         window: tuple = (int(ENV.WIN_TOP), int(ENV.WIN_BOTTOM)),
         t_correct: int = float(ENV.TIME_CORRECT),
-        xlsxname: bool = int(ENV.RESULTS_DATA),
+        xlsxname: bool = ENV.RESULTS_DATA,
         s_per_frame: float = float(ENV.TIME_PER_FRAME),
         vid_start: float = 0.0,
         gauss_std: int = int(ENV.GAUSS_STD),
