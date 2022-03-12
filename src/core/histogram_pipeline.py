@@ -40,14 +40,18 @@ class HistogramPipeline:
         path_sliced: str,
         data_dict: dict = {"cells": np.empty(1), "sensor": np.empty(1)},
         out_folder: str = None,
-        window: tuple = (0, 25),
-        t_correct: int = 50,
-        xlsxname: bool = ENV.RESULTS_DATA,
-        s_per_frame: float = ENV.TIME_PER_FRAME,
+        window: tuple = (int(ENV.WIN_TOP), int(ENV.WIN_BOTTOM)),
+        t_correct: int = float(ENV.TIME_CORRECT),
+        xlsxname: bool = int(ENV.RESULTS_DATA),
+        s_per_frame: float = float(ENV.TIME_PER_FRAME),
         vid_start: float = 0.0,
+        gauss_std: int = int(ENV.GAUSS_STD),
+        slice_freq: int = int(ENV.SLICE_FREQ),
     ):
         self.s_per_frame = s_per_frame
         self.vid_start = vid_start
+        self.gauss_std = gauss_std
+        self.slice_freq = slice_freq
 
         # if out_folder not set, create results folder in input folder
         if out_folder is None:
@@ -210,16 +214,16 @@ class HistogramPipeline:
 
     def _transform_brightness(self, brightness: np.array) -> np.array:
         brightness = brightness.copy()
-        brightness[:, 1] = scipy.ndimage.gaussian_filter1d(brightness[:, 1], sigma=60)
+        brightness[:, 1] = scipy.ndimage.gaussian_filter1d(
+            brightness[:, 1], sigma=self.gauss_std
+        )
         return brightness
 
     def _read_sliced(self, path_sliced: str, window: tuple) -> np.array:
         sliced = np.loadtxt(path_sliced, delimiter=",")
         means = sliced[:, window[0] : window[1]].mean(axis=1)
         time = (
-            np.linspace(0, len(means), len(means))
-            * float(self.s_per_frame)
-            * float(ENV.SLICE_FREQ)
+            np.linspace(0, len(means), len(means)) * self.s_per_frame * self.slice_freq
         )
         brightness = np.stack((time, means), axis=1)
         return brightness

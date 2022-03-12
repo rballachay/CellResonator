@@ -108,7 +108,6 @@ for python, or for docker run:
 python -m main -i /home/app_user/data_mount -t "workflow1"
 ```
 
-
 ## Dependencies
 
 Cell Resonator requires:
@@ -143,6 +142,26 @@ pip install pytest
 
 pytest tests
 ```
+
+## Re-configuring the pipeline
+
+The pipeline is built upon many variables which were selected through trial and error as the best possible configuration. All of these variables are accessible inside of the .env file in this directory, under the header "CONFIGURATION VARIABLES". I will go briefly over the purpose of each of these here, in the case that you would like to change them in the future. 
+
+1. SLICE_FREQ
+
+When the sliced csv is produced from the raw video data, every SLICE_FREQ frames are averaged, and the average is output to the sliced csv file, which is used to create the plots and the xlsx file. This defaults to 5, but could realistically be changed to anything as low as 1 and as high as 25. It is there to reduce noise. 
+
+2. TIME_CORRECT
+
+There is a time delay of ~50 seconds between the resonator chamber and the output sensor. If this distance changes, or the average flow rate in the connecting tube changes, this value will need to be changed. 
+
+3. GAUSS_STD
+
+When the resonator data is plotted for visualization, a gaussian filter is added to mimic the effect of down-stream dispersion which will occur to cells traveling through the silicon tube leading out of the resonator. This defaults to 60, however can be changed without harm.
+
+4. WIN_TOP & WIN_BOTTOM 
+
+The brightness algorithm is applied to the top fraction of the resonator. This region is typically 0 - 25 pixels from the top of the region of interest indicated in the section below this. That said, this can depend upon many things, and should be configured in the future. 
 
 ## Reset Basis Image
 
