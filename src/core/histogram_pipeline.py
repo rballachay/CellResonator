@@ -6,6 +6,7 @@ Created on Mon May 24 16:09:10 2021
 @author: RileyBallachay
 """
 import bisect
+import math
 import os
 import warnings
 from typing import Tuple
@@ -38,7 +39,7 @@ class HistogramPipeline:
     def __init__(
         self,
         path_sliced: str,
-        data_dict: dict = {"cells": np.empty(1), "sensor": np.empty(1)},
+        data_dict: dict = {"cells": np.empty(0), "sensor": np.empty(0)},
         out_folder: str = None,
         window: tuple = (int(ENV.WIN_TOP), int(ENV.WIN_BOTTOM)),
         t_correct: int = float(ENV.TIME_CORRECT),
@@ -105,12 +106,14 @@ class HistogramPipeline:
 
     def _plot_brightness(self, ax: plt.Axes, brightness: np.array):
         # plot brightness data onto fig -> always runs
+        x = brightness[:, 0]
         ax.plot(
-            brightness[:, 0],
+            x,
             brightness[:, 1],
             "maroon",
             label="Predicted Cell Loss",
         )
+        ax.set_xticks(np.arange(math.floor(min(x)), math.ceil(max(x)) + 1, 1.0))
 
     def _plot_cellcount(self, ax: plt.Axes, cellcount: np.array):
         # plot cell count data if it exists
@@ -176,19 +179,19 @@ class HistogramPipeline:
         cell counts for the entire time. To make the plot nicer, chop
         off excess data.
         """
-
+        data = np.empty(0)
         if not np.all(np.isnan(cellcount)):
-            data = cellcount
-        elif not np.all(np.isnan(sensordata)):
-            data = sensordata
-        else:
+            data = np.concatenate((data, cellcount[:, 0]))
+        if not np.all(np.isnan(sensordata)):
+            data = np.concatenate((data, sensordata[:, 0]))
+        if np.all(np.isnan(sensordata)) and np.all(np.isnan(cellcount)):
             warnings.warn(
                 "You have neither cell count nor sensor data... is this a mistake?\n"
             )
             return cellcount, sensordata, brightness
 
-        min_bright = bisect.bisect(brightness[:, 0], data[0, 0])
-        max_bright = bisect.bisect(brightness[:, 0], data[-1, 0])
+        min_bright = bisect.bisect(brightness[:, 0], min(data))
+        max_bright = bisect.bisect(brightness[:, 0], max(data))
 
         return cellcount, sensordata, brightness[min_bright:max_bright]
 
@@ -206,10 +209,10 @@ class HistogramPipeline:
         """
 
         if not np.all(np.isnan(cellcount)):
-            cellcount[:, 0] = (cellcount[:, 0] - t_correct) / 60
+            cellcount[:, 0] = cellcount[:, 0] / 60
         if not np.all(np.isnan(sensordata)):
-            sensordata[:, 0] = (sensordata[:, 0] - t_correct) / 60
-        brightness[:, 0] = (brightness[:, 0] + self.vid_start) / 60
+            sensordata[:, 0] = sensordata[:, 0] / 60
+        brightness[:, 0] = (brightness[:, 0] + self.vid_start + t_correct) / 60
         return cellcount, sensordata, brightness
 
     def _transform_brightness(self, brightness: np.array) -> np.array:

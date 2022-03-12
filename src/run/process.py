@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from src.core.read_excel import ReadExcel
 
