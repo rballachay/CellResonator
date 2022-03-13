@@ -9,6 +9,10 @@ VID_PATH = f"{FOLDER}{os.sep}vid_Washing.mp4"
 
 def test_resonator_pipeline(cleaning):
     cleaning(FOLDER)
-    rep = ResonatorPipeline(VID_PATH, basis_image="tests/data/test_basis.jpg")
+    rep = ResonatorPipeline(
+        VID_PATH,
+        dims={"X": 5, "Y": 5, "W": 50, "H": 50},
+        basis_image="tests/data/test_basis.jpg",
+    )
     rep.run()
     cleaning(FOLDER)

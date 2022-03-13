@@ -171,8 +171,6 @@ class ResonatorPipeline:
         for i in range(100):
             success, vid = vidcap.read()
             vid = cv2.cvtColor(vid, cv2.COLOR_BGR2GRAY)
-            if not success:
-                continue
             vids[..., i] = vid[self.Y : self.Y + self.H, self.X : self.X + self.W]
         return np.mean(vids, axis=2)
 
