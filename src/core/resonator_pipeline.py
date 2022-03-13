@@ -76,7 +76,7 @@ class ResonatorPipeline:
 
         # get the brightness ratio between the reference
         # video and the target
-        self._set_brightness_ratio(target_norm, basis_norm)
+        self.background = self._get_brightness()
 
     def _get_frame_100(self) -> np.array:
         # Grab the first frame from our reference photo
@@ -163,20 +163,18 @@ class ResonatorPipeline:
             int(end[0] - start[0]),
         )
 
-    def _set_brightness_ratio(
-        self, image_new: str, image_basis: str, h_chamber=int(ENV.H_CHAMBER)
-    ):
-        # get the average chamber brightness
-        target_mean = np.mean(
-            image_new[self.Y : self.Y + h_chamber, self.X : self.X + self.W]
-        )
-        basis_mean = np.mean(
-            image_basis[
-                int(ENV.Y) : int(ENV.Y) + int(ENV.H_CHAMBER),
-                int(ENV.X) : int(ENV.X) + int(ENV.W),
-            ]
-        )
-        self.brightness_ratio = basis_mean / target_mean
+    def _get_brightness(self):
+        # Grab the first frame from our reference photo
+        vidcap = cv2.VideoCapture(self.video_path)
+
+        vids = np.zeros((self.H, self.W, 100))
+        for i in range(100):
+            success, vid = vidcap.read()
+            vid = cv2.cvtColor(vid, cv2.COLOR_BGR2GRAY)
+            if not success:
+                continue
+            vids[..., i] = vid[self.Y : self.Y + self.H, self.X : self.X + self.W]
+        return np.mean(vids, axis=2)
 
     def _pipeline_main(self, cropped_vid: str) -> List[np.array]:
 
@@ -208,8 +206,8 @@ class ResonatorPipeline:
                     self.Y : self.Y + self.H, self.X : self.X + self.W, :
                 ]
 
-                imageGREY = crop_frame.mean(axis=2)
-                mean_xaxis = imageGREY.mean(axis=1) * self.brightness_ratio
+                imageGREY = crop_frame.mean(axis=2) - self.background
+                mean_xaxis = imageGREY.mean(axis=1)
                 norm_sum = self._grouped_avg(mean_xaxis)
                 slices.append(norm_sum)
 
