@@ -216,13 +216,19 @@ class HistogramPipeline:
         return cellcount, sensordata, brightness
 
     def _transform_brightness(self, brightness: np.array) -> np.array:
-        brightness = brightness.copy()
-        brightness[:, 1] = scipy.ndimage.gaussian_filter1d(
-            brightness[:, 1], sigma=self.gauss_std
+        """Perform gaussian smoothing on brightness data to
+        reduce noise and mimic downstream dispersion.
+        """
+        _brightness = brightness.copy()
+        _brightness[:, 1] = scipy.ndimage.gaussian_filter1d(
+            _brightness[:, 1], sigma=self.gauss_std
         )
-        return brightness
+        return _brightness
 
     def _read_sliced(self, path_sliced: str, window: tuple) -> np.array:
+        """Read in the sliced data from csv and convert slice number to
+        time using s_per_frame and slice_freq
+        """
         sliced = np.loadtxt(path_sliced, delimiter=",")
         means = sliced[:, window[0] : window[1]].mean(axis=1)
         time = (
