@@ -189,7 +189,7 @@ _Note that this has not yet been adapted to work in Docker_
 
 Calibration is used to create a linear regression model which can relate the absolute pixel brightness inside of the resonator to the downstream cell count. Note that calibration will only work when there is >100 frames of the resonator with just media at the start of the video, so it doesn't currently work for washing. The absolute brightness in the environment can change slightly when using the brightness calibration curve, as the background brightness in the chamber is subtracted first. To use, you will first need to run the pipeline and create the xlsx data sheets as shown in data/calibrate/sample_data. If you don't have any sample data and want to calibrate anyways, you may try using this data as an example. The pipeline should work on both docker and from the CLI. It will reset the linear regression model inside of the .env file and create a regression png stored in data/calibrate/results, as shown below:
 
-![](docs/images/calibrate)
+![](docs/images/calibration.png)
 
 ```bash
 python -m calibrate -i path/to/data
