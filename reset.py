@@ -6,13 +6,13 @@ from src.extra.reset_coords import BoundingBoxWidget, reset_basis
 
 @click.command()
 @click.option(
-    "-b",
-    "basis_video",
+    "-i",
+    "input_video",
     prompt=False,
     help="video to use to reset environment variables, or folder with video",
 )
-def main(basis_video):
-    bbx_wid = BoundingBoxWidget(basis_video)
+def main(input_video):
+    bbx_wid = BoundingBoxWidget(input_video)
     while True:
         cv2.imshow("image", bbx_wid.show_image())
         key = cv2.waitKey(1)

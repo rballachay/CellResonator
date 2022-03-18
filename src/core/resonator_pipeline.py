@@ -163,12 +163,12 @@ class ResonatorPipeline:
             int(end[0] - start[0]),
         )
 
-    def _get_brightness(self):
+    def _get_brightness(self, n_frames: int = 25):
         # Grab the first frame from our reference photo
         vidcap = cv2.VideoCapture(self.video_path)
 
-        vids = np.zeros((self.H, self.W, 100))
-        for i in range(100):
+        vids = np.zeros((self.H, self.W, n_frames))
+        for i in range(n_frames):
             success, vid = vidcap.read()
             vid = cv2.cvtColor(vid, cv2.COLOR_BGR2GRAY)
             vids[..., i] = vid[self.Y : self.Y + self.H, self.X : self.X + self.W]
