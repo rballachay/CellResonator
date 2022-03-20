@@ -174,11 +174,6 @@ class HistogramPipeline:
 
         return cellcount, sensordata, brightness
 
-    def _apply_calibration(self, brightness: np.array) -> np.array:
-        _brightness = brightness.copy()
-        _brightness[:, 1] = _brightness[:, 1] * self.coeffs[0] + self.coeffs[1]
-        return _brightness
-
     def _fix_bounds(
         self,
         cellcount: np.array,
@@ -234,11 +229,14 @@ class HistogramPipeline:
         _brightness[:, 1] = scipy.ndimage.gaussian_filter1d(
             _brightness[:, 1], sigma=self.gauss_std
         )
-
         self.scaled_brightness = _brightness
-
         _brightness = self._apply_calibration(_brightness)
 
+        return _brightness
+
+    def _apply_calibration(self, brightness: np.array) -> np.array:
+        _brightness = brightness.copy()
+        _brightness[:, 1] = _brightness[:, 1] * self.coeffs[0] + self.coeffs[1]
         return _brightness
 
     def _read_sliced(self, path_sliced: str, window: tuple) -> np.array:
