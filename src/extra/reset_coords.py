@@ -151,13 +151,14 @@ def _change_basis(new_image):
     coordinates selected using the interactive
     class.
     """
+    pth = "data/basis/basis"
     num = 0
     while True:
-        new = f"data/basis{num}.jpg"
+        new = f"{pth}{num}.jpg"
         if os.path.exists(new):
             num += 1
             continue
         else:
-            os.rename("data/basis.jpg", f"data/basis{num}.jpg")
+            os.rename(f"{pth}.jpg", f"{pth}{num}.jpg")
             break
-    cv2.imwrite("data/basis.jpg", new_image)
+    cv2.imwrite(f"{pth}.jpg", new_image)
