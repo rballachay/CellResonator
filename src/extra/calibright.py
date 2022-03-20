@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +9,11 @@ from sklearn.linear_model import LinearRegression
 
 
 def calibrate_brightness(path: Path, save: Path = Path("data/calibrate/results")):
+    """Main function for calibrating relationship between brightness and cell loss.
+    Takes all xlsx data from input path, reads in the cell count and brightness
+    columns, creates linear regression model, saves coeffients into .env file and
+    saves calibration image to save path.
+    """
     fit_df, hash_df = gen_df(path)
     fit_df = fit_df[fit_df["title"].str.contains("concentration")]
     alpha, beta = _fit_linear_model(fit_df)
@@ -16,14 +22,18 @@ def calibrate_brightness(path: Path, save: Path = Path("data/calibrate/results")
     _save_cal_coefs(alpha, beta)
 
 
-def gen_df(path: Path):
+def gen_df(path: Path) -> Tuple[pd.DataFrame, str]:
+    """Read in the data, and generate a hash of the data that will
+    be used to avoid writing the exact same calibration multiple
+    times.
+    """
     data = _read_data(path)
-    meta_df = _concat_data(data)
-    fit_df = _fit_data(meta_df)
+    fit_df = _gen_data(data)
     return fit_df, str(pd.util.hash_pandas_object(fit_df).sum())[:6]
 
 
-def _read_data(path: Path) -> list:
+def _read_data(path: Path) -> dict:
+    """Read in all xlsx files from path and return as dictionary"""
     data = {}
     csv_list = [path / f for f in os.listdir(path) if ".xlsx" in f]
     for csv in csv_list:
@@ -31,43 +41,41 @@ def _read_data(path: Path) -> list:
     return data
 
 
-def _concat_data(data: dict) -> pd.DataFrame:
+def _gen_data(data: dict) -> pd.DataFrame:
+    """Put data in format acceptable for"""
     for title, df in data.items():
         df["title"] = title
-
-        if "meta_df" not in locals():
-            meta_df = df
-        else:
-            meta_df = pd.concat([meta_df, df])
-    return meta_df
+        df = _fit_data(df)
+        data[title] = df
+    return pd.concat(data.values())
 
 
 def _fit_data(df: pd.DataFrame):
-    dfs = []
-    for title in df.title.unique():
-        _df = df[df.title == title]
-        a = np.polyfit(
-            _df["Time (min) - imaging"], _df["Image analysis (Scaled Brightness)"], 7
-        )
-        _df.loc[:, "Polyfit"] = np.poly1d(a)(_df["Time (min) - cells"].values)
-        dfs.append(_df)
-    return pd.concat(dfs)
+    """Need to fit polynomial model in order to have the brightness at each
+    time point cell counts are taken"""
+    _df = df.copy()
+    a = np.polyfit(
+        _df["Time (min) - imaging"], _df["Image analysis (Scaled Brightness)"], 7
+    )
+    _df.loc[:, "Polyfit"] = np.poly1d(a)(_df["Time (min) - cells"].values)
+    return _df
 
 
 def _plot_data(df: pd.DataFrame, alpha: float, beta: float) -> plt.Figure:
     fig, ax = plt.subplots(dpi=200)
-    ax.plot(df["Cell count (M cells/mL)"], df["Polyfit"], "k.")
-    ax.plot(
-        df["Cell count (M cells/mL)"], df["Cell count (M cells/mL)"] * alpha + beta, "r"
-    )
-    ax.set_xlabel("Cell Count (M cells/mL)")
-    ax.set_ylabel("Average Brightness")
+    ax.plot(df["Polyfit"], df["Cell count (M cells/mL)"], "k.")
+    ax.plot(df["Polyfit"], df["Polyfit"] * alpha + beta, "r")
+    ax.set_ylabel("Cell Count (M cells/mL)")
+    ax.set_xlabel("Average Brightness")
+    sign = "-" if beta < 0 else "+"
+    string = f"cells = {alpha:.2f} * brightness {sign} {abs(beta):.2f}"
+    fig.text(0.12, 0.9, string, size=10, color="purple")
     return fig
 
 
 def _fit_linear_model(fit_df: pd.DataFrame):
     lr = LinearRegression()
-    data = fit_df[["Cell count (M cells/mL)", "Polyfit"]].dropna().values
+    data = fit_df[["Polyfit", "Cell count (M cells/mL)"]].dropna().values
     lr.fit(data[:, 0].reshape(-1, 1), data[:, 1].reshape(-1, 1))
     return (lr.coef_[0][0], lr.intercept_[0])
 
