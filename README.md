@@ -38,7 +38,7 @@ docker run --name resonator-container -it -v "path/to/data":/home/app_user/data_
 The following command will open up a bash shell from inside of your docker container, and you can run the following command (DO NOT change the path indicated below)
 
 ```bash
-python -m main -i /home/app_user/data_mount
+python -m src.main -i /home/app_user/data_mount
 ```
 
 Once the command is done running, and you have verified that your results have been produced, you can exit the container bash using
@@ -75,7 +75,7 @@ pip install -r requirements.txt
 3. Run the package from terminal/command line using
 
 ```bash
-python -m main -i "path/to/folder/with/data" 
+python -m src.main -i "path/to/folder/with/data" 
 ```
 
 Where the path is replaced with the appropriate path to the data folder, and num_files corresponds to the number of video files to process. The script will run and produce the histograms indicated above.
@@ -87,25 +87,25 @@ Where the path is replaced with the appropriate path to the data folder, and num
 Workflow 1 was created to run the brightness algorithm on the top of the resonator video for any length of video and output an xlsx file in the 'results' folder which has the from the start of the video and the average brightness in the top of the resonator. In order to run this workflow in either docker or python, follow all the instructions provided above expect for the portion with the python command. Instead of running
 
 ```bash
-python -m main -i "path/to/folder/with/data"
+python -m src.main -i "path/to/folder/with/data"
 ```
 
 for python, or 
 
 ```bash
-python -m main -i /home/app_user/data_mount
+python -m src.main -i /home/app_user/data_mount
 ```
 
 for docker, run this command instead:
 
 ```bash
-python -m main -i "path/to/folder/with/data" -t "workflow1"
+python -m src.main -i "path/to/folder/with/data" -t "workflow1"
 ```
 
 for python, or for docker run:
 
 ```bash
-python -m main -i /home/app_user/data_mount -t "workflow1"
+python -m src.main -i /home/app_user/data_mount -t "workflow1"
 ```
 
 ## Dependencies
@@ -172,13 +172,13 @@ The majority of this pipeline is built off of a [single reference image](data/ba
 To reset the basis image, a new basis video needs to be selected, and the coordiantes of the new ROI drawn on top. To run this module, please run the following command from the command line:
 
 ```bash
-python -m reset -i path/to/newbasisvideo.mp4
+python -m src.reset -i path/to/newbasisvideo.mp4
 ```
 
 Alternatively, you can also just use the folder in which the video is stored. If there is more than 1 video, it will select the first and return it. 
 
 ```bash
-python -m reset -i path/to/newbasisvideofolder/
+python -m src.reset -i path/to/newbasisvideofolder/
 ```
 
 This will first extract the 100th frame of the video as the basis image, create an interactive window where you can change the basis image and change the coordinates in the .env file. Please draw the ROI according to the sample image provided above. In order to reset all drawn ROI's on the image, right click on the interactive window. To exit and save the latest ROI, press Q. Note that this does not delete the latest basis image. It will rename it using the lowest integer possible (i.e. basis0.jpg), given that it won't overwrite another image. 
@@ -192,13 +192,13 @@ Calibration is used to create a linear regression model which can relate the abs
 ![](docs/images/calibration.png)
 
 ```bash
-python -m calibrate -i path/to/data
+python -m src.calibrate -i path/to/data
 ```
 
 Alternatively, you may run from docker using all the steps outlined for main, except run the following command instead:
 
 ```bash
-python -m calibrate -i /home/app_user/data_mount
+python -m src.calibrate -i /home/app_user/data_mount
 ```
 
 
