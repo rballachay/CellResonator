@@ -15,7 +15,6 @@ def calibrate_brightness(path: Path, save: Path = Path("data/calibrate/results")
     saves calibration image to save path.
     """
     fit_df, hash_df = gen_df(path)
-    fit_df = fit_df[fit_df["title"].str.contains("concentration")]
     alpha, beta = _fit_linear_model(fit_df)
     fig = _plot_data(fit_df, alpha, beta)
     fig.savefig(f"{save.resolve()}{os.sep}cal_fig_{hash_df}.png")
