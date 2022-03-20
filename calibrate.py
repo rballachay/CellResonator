@@ -13,14 +13,7 @@ from src.extra.calibright import calibrate_brightness
     help="folder with data to use for calibration",
     type=click.Path(exists=True)
 )
-@click.option(
-    "-c",
-    "cal_on",
-    prompt=False,
-    default='concentration',
-    help="folder with data to use for calibration",
-)
-def main(input_data, cal_on):
+def main(input_data):
     calibrate_brightness(Path(input_data))
 
 

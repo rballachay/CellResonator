@@ -67,7 +67,7 @@ def _plot_data(df: pd.DataFrame, alpha: float, beta: float) -> plt.Figure:
     ax.set_ylabel("Cell Count (M cells/mL)")
     ax.set_xlabel("Average Brightness")
     sign = "-" if beta < 0 else "+"
-    string = f"cells = {alpha:.2f} * brightness {sign} {abs(beta):.2f}"
+    string = f"cells = {alpha:.3f} * brightness {sign} {abs(beta):.3f}"
     fig.text(0.12, 0.9, string, size=10, color="purple")
     return fig
 
