@@ -48,11 +48,15 @@ class HistogramPipeline:
         vid_start: float = 0.0,
         gauss_std: int = int(ENV.GAUSS_STD),
         slice_freq: int = int(ENV.SLICE_FREQ),
+        background: int = 0.0,
+        coeffs: tuple = (float(ENV.ALPHA_BRI), float(ENV.BETA_BRI)),
     ):
         self.s_per_frame = s_per_frame
         self.vid_start = vid_start
         self.gauss_std = gauss_std
         self.slice_freq = slice_freq
+        self.background = background
+        self.coeffs = coeffs
 
         # if out_folder not set, create results folder in input folder
         if out_folder is None:
@@ -167,7 +171,13 @@ class HistogramPipeline:
         cellcount, sensordata, brightness = self._fix_bounds(
             cellcount, sensordata, brightness
         )
+
         return cellcount, sensordata, brightness
+
+    def _apply_calibration(self, brightness: np.array) -> np.array:
+        _brightness = brightness.copy()
+        _brightness[:, 1] = _brightness[:, 1] * self.coeffs[0] + self.coeffs[1]
+        return _brightness
 
     def _fix_bounds(
         self,
@@ -220,9 +230,15 @@ class HistogramPipeline:
         reduce noise and mimic downstream dispersion.
         """
         _brightness = brightness.copy()
+        _brightness[:, 1] = _brightness[:, 1] - self.background
         _brightness[:, 1] = scipy.ndimage.gaussian_filter1d(
             _brightness[:, 1], sigma=self.gauss_std
         )
+
+        self.scaled_brightness = _brightness
+
+        _brightness = self._apply_calibration(_brightness)
+
         return _brightness
 
     def _read_sliced(self, path_sliced: str, window: tuple) -> np.array:
@@ -239,9 +255,16 @@ class HistogramPipeline:
 
     def _data_to_xlsx(self, xlsxname: str):
         df = pd.DataFrame(
-            data=np.hstack((self.brightness, self.brightness_raw[:, 1].reshape(-1, 1))),
+            data=np.hstack(
+                (
+                    self.brightness,
+                    self.scaled_brightness[:, 1].reshape(-1, 1),
+                    self.brightness_raw[:, 1].reshape(-1, 1),
+                )
+            ),
             columns=[
                 "Time (min) - imaging",
+                "Image analysis (Estimated Cell Loss)",
                 "Image analysis (Scaled Brightness)",
                 "Image analysis (Unscaled Brightness)",
             ],

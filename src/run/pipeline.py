@@ -7,6 +7,7 @@ from src.core.histogram_pipeline import HistogramPipeline
 from src.core.resonator_pipeline import ResonatorPipeline
 from src.extra.tools import check_dir_make
 from src.run.process import process_config
+from src.run.utils import get_background
 
 
 def pipeline(
@@ -25,7 +26,7 @@ def pipeline(
     data_items, wash_start = process_config(inlet)
 
     # iterate over each item in data items and run pipeline
-    for data_type in data_items:
+    for data_type in sorted(data_items):
 
         # for total video, need to first split
         # videos, then run each individually
@@ -73,12 +74,15 @@ def _run_pipeline(
     )
     path = rsp.run(f"{data_type}_{cropped_vid}")
 
+    _background = get_background(path)
+
     htp = HistogramPipeline(
         path,
         data_dict["data"][data_type],
         xlsxname=f"{data_type}_{xlsxname}",
         s_per_frame=1 / rsp.fps,
         vid_start=wash_start if data_type == "washing" else 0.0,
+        background=_background,
     )
     htp.plot(
         title=f"Histogram for {data_type.capitalize()}",

@@ -74,10 +74,6 @@ class ResonatorPipeline:
 
         self.X, self.Y, self.W, self.H = self._warp_coordinates()
 
-        # get the brightness ratio between the reference
-        # video and the target
-        self.background = self._get_brightness()
-
     def _get_frame_100(self) -> np.array:
         # Grab the first frame from our reference photo
         vidcap = cv2.VideoCapture(self.video_path)
@@ -163,17 +159,6 @@ class ResonatorPipeline:
             int(end[0] - start[0]),
         )
 
-    def _get_brightness(self, n_frames: int = 25):
-        # Grab the first frame from our reference photo
-        vidcap = cv2.VideoCapture(self.video_path)
-
-        vids = np.zeros((self.H, self.W, n_frames))
-        for i in range(n_frames):
-            success, vid = vidcap.read()
-            vid = cv2.cvtColor(vid, cv2.COLOR_BGR2GRAY)
-            vids[..., i] = vid[self.Y : self.Y + self.H, self.X : self.X + self.W]
-        return np.mean(vids, axis=2)
-
     def _pipeline_main(self, cropped_vid: str) -> List[np.array]:
 
         cap = cv2.VideoCapture(self.video_path)
@@ -204,11 +189,10 @@ class ResonatorPipeline:
                     self.Y : self.Y + self.H, self.X : self.X + self.W, :
                 ]
 
-                imageGREY = crop_frame.mean(axis=2) - self.background
+                imageGREY = crop_frame.mean(axis=2)
                 mean_xaxis = imageGREY.mean(axis=1)
                 norm_sum = self._grouped_avg(mean_xaxis)
                 slices.append(norm_sum)
-
                 out.write(crop_frame)
             else:
                 break
