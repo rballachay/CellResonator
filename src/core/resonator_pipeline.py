@@ -188,11 +188,7 @@ class ResonatorPipeline:
                 crop_frame = frame[
                     self.Y : self.Y + self.H, self.X : self.X + self.W, :
                 ]
-
-                imageGREY = crop_frame.mean(axis=2)
-                mean_xaxis = imageGREY.mean(axis=1)
-                norm_sum = self._grouped_avg(mean_xaxis)
-                slices.append(norm_sum)
+                slices.append(self._frame_to_slice(crop_frame))
                 out.write(crop_frame)
             else:
                 break
@@ -208,7 +204,12 @@ class ResonatorPipeline:
         np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
         return f"{self.out_folder}{os.sep}{self.filename}"
 
-    def _grouped_avg(self, myArray):
+    def _frame_to_slice(self, frame: np.ndarray) -> np.ndarray:
+        _imageGREY = frame.mean(axis=2)
+        mean_xaxis = _imageGREY.mean(axis=1)
+        return self._grouped_avg(mean_xaxis)
+
+    def _grouped_avg(self, myArray: np.array) -> np.array:
         N = self.slice_freq
         result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
         result[1:] = result[1:] - result[:-1]

@@ -11,6 +11,7 @@ from src.extra.calibright import calibrate_brightness
     "input_data",
     prompt=False,
     help="folder with data to use for calibration",
+    default="data/calibrate/sample_data",
     type=click.Path(exists=True),
 )
 def main(input_data):
