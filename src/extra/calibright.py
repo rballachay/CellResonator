@@ -2,10 +2,14 @@ import os
 from pathlib import Path
 from typing import Tuple
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 from sklearn.linear_model import LinearRegression
+
+COLORS = list(mcolors.BASE_COLORS.keys())
 
 
 def calibrate_brightness(path: Path, save: Path = Path("data/calibrate/results")):
@@ -44,6 +48,7 @@ def _gen_data(data: dict) -> pd.DataFrame:
     """Put data in format acceptable for"""
     for title, df in data.items():
         df["title"] = title
+        df["date"] = title.split("_")[-1]
         df = _fit_data(df)
         data[title] = df
     return pd.concat(data.values())
@@ -61,18 +66,35 @@ def _fit_data(df: pd.DataFrame):
 
 
 def _plot_data(df: pd.DataFrame, alpha: float, beta: float) -> plt.Figure:
+    """Plot calibration curve for brightness vs cell count, where
+    each day of analysis if plotted with a different symbol/color.
+    """
     fig, ax = plt.subplots(dpi=200)
-    ax.plot(df["Polyfit"], df["Cell count (M cells/mL)"], "k.")
-    ax.plot(df["Polyfit"], df["Polyfit"] * alpha + beta, "r")
+    for (i, _date) in enumerate(df.date.unique()):
+        _df = df[df.date == _date]
+        ax.plot(
+            _df["Polyfit"],
+            _df["Cell count (M cells/mL)"],
+            color=COLORS[i],
+            marker=".",
+            label=_date,
+            linestyle="",
+        )
+    ax.plot(df["Polyfit"], df["Polyfit"] * alpha + beta, "k")
     ax.set_ylabel("Cell Count (M cells/mL)")
     ax.set_xlabel("Average Brightness")
-    sign = "-" if beta < 0 else "+"
-    string = f"cells = {alpha:.3f} * brightness {sign} {abs(beta):.3f}"
-    fig.text(0.12, 0.9, string, size=10, color="purple")
+    ax.legend()
+    fig.text(0.12, 0.9, _title(alpha, beta), size=10, color="purple")
     return fig
 
 
+def _title(alpha: float, beta: float):
+    sign = "-" if beta < 0 else "+"
+    return f"cells = {alpha:.3f} * brightness {sign} {abs(beta):.3f}"
+
+
 def _fit_linear_model(fit_df: pd.DataFrame):
+    """Fit linear regression model to brightness & cell count"""
     lr = LinearRegression()
     data = fit_df[["Polyfit", "Cell count (M cells/mL)"]].dropna().values
     lr.fit(data[:, 0].reshape(-1, 1), data[:, 1].reshape(-1, 1))
