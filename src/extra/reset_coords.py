@@ -11,12 +11,8 @@ class BoundingBoxWidget(object):
     to the reference image
     """
 
-    def __init__(self, video: str):
-        # check if video or path to folder with video
-        video = self._check_video(video)
-
-        # extract basis image from video
-        self.original_image = self._get_basis_image(video)
+    def __init__(self, original_image: np.ndarray):
+        self.original_image = original_image
 
         # make clone which will be written to
         self.clone = self.original_image.copy()
@@ -86,33 +82,35 @@ class BoundingBoxWidget(object):
         )
         print("In order to clear all ROI's on the image, right click on the mouse")
 
-    def _check_video(self, video):
-        """Can input either a path to a video or path to
-        folder with video. If folder, first video is selected.
-        """
-        if video.endswith(".mp4"):
-            return video
-        elif os.path.isdir(video):
-            for file in os.listdir(video):
-                if file.endswith(".mp4"):
-                    return os.path.join(video, file)
-            raise Exception("There are no videos in this folder")
-        else:
-            raise Exception("Uknown file extention, please use folder or video")
 
-    def _get_basis_image(self, basis_video) -> np.array:
-        """Input is video, so need utility to grab a reference
-        frame which can be used to replace the basis.
-        """
-        # Grab the first frame from our reference photo
-        vidcap = cv2.VideoCapture(basis_video)
-        # take 100th frame to avoid issues with reading
-        # first frame
-        for _ in range(100):
-            success, vid = vidcap.read()
-        if not success:
-            raise Exception(f"Error reading 10th frame from path {basis_video}")
-        return vid
+def check_video(video):
+    """Can input either a path to a video or path to
+    folder with video. If folder, first video is selected.
+    """
+    if video.endswith(".mp4"):
+        return video
+    elif os.path.isdir(video):
+        for file in os.listdir(video):
+            if file.endswith(".mp4"):
+                return os.path.join(video, file)
+        raise Exception("There are no videos in this folder")
+    else:
+        raise Exception("Uknown file extention, please use folder or video")
+
+
+def get_basis_image(basis_video) -> np.array:
+    """Input is video, so need utility to grab a reference
+    frame which can be used to replace the basis.
+    """
+    # Grab the first frame from our reference photo
+    vidcap = cv2.VideoCapture(basis_video)
+    # take 100th frame to avoid issues with reading
+    # first frame
+    for _ in range(100):
+        success, vid = vidcap.read()
+    if not success:
+        raise Exception(f"Error reading 10th frame from path {basis_video}")
+    return vid
 
 
 def reset_basis(coords, new_image):

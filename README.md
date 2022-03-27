@@ -201,6 +201,28 @@ Alternatively, you may run from docker using all the steps outlined for main, ex
 python -m src.calibrate -i /home/app_user/data_mount
 ```
 
+## Using the Real-time API 
+
+In order to use the algorithm in real time, an API has been developed which will allow for this program to be incorporated into other software packages or workflows. In order to use this api, you must first calibrate the brightness and align the ROI to the image. This will occur automatically 1 second after starting the program. After calibrating, the following format of data will be output to the terminal, which includes the time, raw brightness and predicted cell loss (using the calibration curve). Note that the program defaults to using 1, which should be the camera mounted to the PC (not including the webcam), however this is untested.
+
+```
+t=0.024, raw_bri=139.519, cell_loss=5.794
+t=0.058, raw_bri=139.636, cell_loss=5.799
+t=0.089, raw_bri=139.548, cell_loss=5.795
+t=0.121, raw_bri=139.365, cell_loss=5.788
+```
+
+To start the program, run the following from the command line: 
+
+```bash
+python -m src.api.run
+```
+
+Or, to pipe the output to a text file or another function:
+```
+python -m src.api.run >> textfile.txt
+python -m src.api.run | otherfunction.sh
+```
 
 ## Help/Troubleshooting
 
