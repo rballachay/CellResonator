@@ -52,6 +52,9 @@ class ResonatorPipeline:
         # run normalization (register, brightness)
         self.normalize_data()
 
+        # check that homography worked
+        self._check_crop()
+
         # run the pipeline, write output video
         slices = self._pipeline_main(cropped_vid)
 
@@ -158,6 +161,20 @@ class ResonatorPipeline:
             int(end[1] - start[1]),
             int(end[0] - start[0]),
         )
+
+    def _check_crop(self):
+        # Check to see if the crop region returns nothing
+        cap = cv2.VideoCapture(self.video_path)
+
+        # get the 5th frame to avoid problems with the first
+        for _ in range(5):
+            success, image = cap.read()
+        if success:
+            crop_frame = image[self.Y : self.Y + self.H, self.X : self.X + self.W, :]
+            if np.all((crop_frame == 0)):
+                raise Exception(
+                    "The crop region is empty - this typically happens when the basis image need to be reset. Please see how to reset basis image in the README."
+                )
 
     def _pipeline_main(self, cropped_vid: str) -> List[np.array]:
 

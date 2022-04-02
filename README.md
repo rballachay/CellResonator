@@ -15,6 +15,14 @@ Once the videos are matches, the average resonator intensity is extracted as a c
 
 ![](docs/images/results.png "Conc") 
 
+This pipeline is capable of processing the following combinations of videos:
+
+* 1 'total' video, which contains both concentration and washing 
+* 2 videos, 1 for concentration and the other for washing.
+* 1 concentration or 1 washing _(note that processing a single wash video is not advised, unless the cells have a chance to settle before wash [for background sub])_
+
+__Note: If you are using separate videos for concetration and washing, they must have concentration/washing in the title of the video__. 
+
 ## Usage
 
 ### 1. Running the pipeline

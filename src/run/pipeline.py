@@ -1,13 +1,9 @@
-import os
-
-from moviepy.editor import VideoFileClip
-from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from src.config import ENV
 from src.core.histogram_pipeline import HistogramPipeline
 from src.core.resonator_pipeline import ResonatorPipeline
-from src.extra.tools import check_dir_make
 from src.run.process import process_config
-from src.run.utils import get_background
+from src.run.splitting import total_video_splitter
+from src.run.utils import check_results_folder, get_background
 
 
 def pipeline(
@@ -25,14 +21,17 @@ def pipeline(
     # process config, aka get data dictionary with video and cell counts
     data_items, wash_start = process_config(inlet)
 
+    # check if results folder exists. if it does, rename to result_n
+    check_results_folder(inlet)
+
     # iterate over each item in data items and run pipeline
+    # is sorted so that concentration will always come first
     for data_type in sorted(data_items):
 
         # for total video, need to first split
         # videos, then run each individually
         if data_type == "total":
             total_video_pipeline(
-                inlet,
                 data_items,
                 basis_image,
                 dims,
@@ -45,7 +44,6 @@ def pipeline(
             _run_pipeline(
                 data_items[data_type],
                 data_type,
-                inlet,
                 basis_image,
                 dims,
                 plot_name,
@@ -54,45 +52,7 @@ def pipeline(
             )
 
 
-def _run_pipeline(
-    data_dict: dict,
-    data_type: str,
-    inlet: str,
-    basis_image: str = ENV.BASIS_IMAGE,
-    dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
-    plot_name: str = ENV.HIST_PLOT,
-    filename: str = ENV.SLICED_FILENAME,
-    xlsxname: str = ENV.RESULTS_DATA,
-    cropped_vid: str = ENV.CROPPED_FILENAME,
-    wash_start: float = 0.0,
-):
-    rsp = ResonatorPipeline(
-        data_dict["video"],
-        basis_image=basis_image,
-        dims=dims,
-        filename=f"{data_type}_{filename}",
-    )
-    path = rsp.run(f"{data_type}_{cropped_vid}")
-
-    _background = get_background(path)
-
-    htp = HistogramPipeline(
-        path,
-        data_dict["data"][data_type],
-        xlsxname=f"{data_type}_{xlsxname}",
-        s_per_frame=1 / rsp.fps,
-        vid_start=wash_start if data_type == "washing" else 0.0,
-        background=_background,
-    )
-    htp.plot(
-        title=f"Histogram for {data_type.capitalize()}",
-        save=True,
-        filename=f"{data_type}_{plot_name}",
-    )
-
-
 def total_video_pipeline(
-    inlet: str,
     data_dict: dict,
     basis_image: str = ENV.BASIS_IMAGE,
     dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
@@ -118,7 +78,6 @@ def total_video_pipeline(
         _run_pipeline(
             _data_dict_tmp,
             title,
-            inlet,
             basis_image,
             dims,
             plot_name,
@@ -127,47 +86,45 @@ def total_video_pipeline(
         )
 
 
-def total_video_splitter(data_dict):
-    target_dat = _split_data(data_dict)
-    return {dat[0]: _split_video(data_dict["video"], dat) for dat in target_dat}
-
-
-def _split_data(data_dict: dict) -> tuple:
-    """HistogramPipeline is only set up to do a single phase - be that
-    concentration or washing. In order to run a "total video" need to
-    split the sliced array into two parts - one for concentration and
-    one for washing.
+def _run_pipeline(
+    data_dict: dict,
+    data_type: str,
+    basis_image: str = ENV.BASIS_IMAGE,
+    dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
+    plot_name: str = ENV.HIST_PLOT,
+    filename: str = ENV.SLICED_FILENAME,
+    xlsxname: str = ENV.RESULTS_DATA,
+    cropped_vid: str = ENV.CROPPED_FILENAME,
+    wash_start: float = 0.0,
+):
+    """The main video processing pipeline for all types. Runs
+    resonator pipeline, which produces csv results, then gets
+    background and produces histogram/csv results.
     """
 
-    # make dictionary out of dataframe ref_data which
-    # includes important info about start & stop of vid
-    ref_dat = data_dict["data"]["reference"]["data"]
-    ref_dict = dict(zip(ref_dat["index"], ref_dat.value))
-
-    return (
-        ("concentration", (0, ref_dict["End of concentration"])),
-        (
-            "washing",
-            (
-                ref_dict["Start of washing"],
-                VideoFileClip(data_dict["video"]).duration,
-            ),
-        ),
+    # Run video processing, produce csv results
+    rsp = ResonatorPipeline(
+        data_dict["video"],
+        basis_image=basis_image,
+        dims=dims,
+        filename=f"{data_type}_{filename}",
     )
+    path = rsp.run(f"{data_type}_{cropped_vid}")
 
+    # Get background intensity from csv file
+    _background = get_background(path)
 
-def _split_video(vid_path: str, rng_dat: tuple) -> str:
-    """Split video according to data provided in
-    rng_dat, saving each in the input folder.
-    """
-    vid_i = os.sep.join(vid_path.split(os.sep)[:-1])
-    vid_n = vid_path.split(os.sep)[-1]
-    targetname = f"{vid_i}{os.sep}split_vids{os.sep}{rng_dat[0]}_{vid_n}"
-    check_dir_make(f"{vid_i}{os.sep}split_vids")
-    ffmpeg_extract_subclip(
-        vid_path,
-        rng_dat[1][0],
-        rng_dat[1][1],
-        targetname=targetname,
+    # Plot histogram + save xlsx results
+    htp = HistogramPipeline(
+        path,
+        data_dict["data"][data_type],
+        xlsxname=f"{data_type}_{xlsxname}",
+        s_per_frame=1 / rsp.fps,
+        vid_start=wash_start if data_type == "washing" else 0.0,
+        background=_background,
     )
-    return targetname
+    htp.plot(
+        title=f"Histogram for {data_type.capitalize()}",
+        save=True,
+        filename=f"{data_type}_{plot_name}",
+    )
