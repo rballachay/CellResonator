@@ -109,7 +109,7 @@ def _get_brightness(input_image: np.ndarray, config: Tuple):
         int(config["X"]) : int(config["X"]) + int(config["W"]),
         :,
     ]
-    _slice = frame_to_slice(crop_frame, int(config["SLICE_FREQ"]))
+    _slice = frame_to_slice(crop_frame)
     top, bottom = int(config["WIN_TOP"]), int(config["WIN_BOTTOM"])
     return np.mean(_slice[top:bottom])
 

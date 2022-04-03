@@ -207,7 +207,7 @@ class ResonatorPipeline:
                 crop_frame = frame[
                     self.Y : self.Y + self.H, self.X : self.X + self.W, :
                 ]
-                slices.append(frame_to_slice(crop_frame, self.slice_freq))
+                slices.append(frame_to_slice(crop_frame))
                 out.write(crop_frame)
             else:
                 break
@@ -224,7 +224,7 @@ class ResonatorPipeline:
         return f"{self.out_folder}{os.sep}{self.filename}"
 
 
-def frame_to_slice(frame: np.ndarray, slice_freq: int) -> np.ndarray:
+def frame_to_slice(frame: np.ndarray) -> np.ndarray:
     _imageGREY = frame.mean(axis=2)
     return _imageGREY.mean(axis=1)
 
