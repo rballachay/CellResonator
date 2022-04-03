@@ -219,15 +219,14 @@ class ResonatorPipeline:
 
     def _stack_and_save(self, slices: List[np.array]) -> str:
         sliced = np.stack(slices, axis=0)
-        sliced = self._grouped_avg(sliced)
+        sliced = _grouped_avg(sliced)
         np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
         return f"{self.out_folder}{os.sep}{self.filename}"
 
 
 def frame_to_slice(frame: np.ndarray, slice_freq: int) -> np.ndarray:
     _imageGREY = frame.mean(axis=2)
-    mean_xaxis = _imageGREY.mean(axis=1)
-    return _grouped_avg(mean_xaxis, slice_freq)
+    return _imageGREY.mean(axis=1)
 
 
 def _grouped_avg(myArray: np.array, slice_freq: int = int(ENV.SLICE_FREQ)) -> np.array:
