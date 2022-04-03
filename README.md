@@ -213,7 +213,7 @@ python -m src.calibrate -i /home/app_user/data_mount
 
 In order to use the algorithm in real time, an API has been developed which will allow for this program to be incorporated into other software packages or workflows. In order to use this api, you must first calibrate the brightness and align the ROI to the image. The following format of data will be output to the terminal, which includes the time, raw brightness and predicted cell loss (using the calibration curve). Note that the program defaults to using 1, which should be the camera mounted to the PC (not including the webcam), however this is untested. You may also set the buffer size (number of frames averaged when estimating brightness) from command line using option b.
 
-___NOTE: You must use Ctrl+C in order to quit the program, not Ctrl+Z. If you use Ctrl+Z, the program will not write to text file__
+__NOTE: You must use Ctrl+C in order to quit the program, not Ctrl+Z. If you use Ctrl+Z, the program will not write to text file__
 
 ```
 t=0.024, raw_bri=139.519, cell_loss=5.794
