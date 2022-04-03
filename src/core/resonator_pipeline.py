@@ -169,6 +169,8 @@ class ResonatorPipeline:
         # get the 5th frame to avoid problems with the first
         for _ in range(5):
             success, image = cap.read()
+        cap.release()
+
         if success:
             crop_frame = image[self.Y : self.Y + self.H, self.X : self.X + self.W, :]
             if np.all((crop_frame == 0)):
@@ -205,7 +207,7 @@ class ResonatorPipeline:
                 crop_frame = frame[
                     self.Y : self.Y + self.H, self.X : self.X + self.W, :
                 ]
-                slices.append(self._frame_to_slice(crop_frame))
+                slices.append(frame_to_slice(crop_frame, self.slice_freq))
                 out.write(crop_frame)
             else:
                 break
@@ -221,13 +223,15 @@ class ResonatorPipeline:
         np.savetxt(f"{self.out_folder}{os.sep}{self.filename}", sliced, delimiter=",")
         return f"{self.out_folder}{os.sep}{self.filename}"
 
-    def _frame_to_slice(self, frame: np.ndarray) -> np.ndarray:
-        _imageGREY = frame.mean(axis=2)
-        mean_xaxis = _imageGREY.mean(axis=1)
-        return self._grouped_avg(mean_xaxis)
 
-    def _grouped_avg(self, myArray: np.array) -> np.array:
-        N = self.slice_freq
-        result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
-        result[1:] = result[1:] - result[:-1]
-        return result
+def frame_to_slice(frame: np.ndarray, slice_freq: int) -> np.ndarray:
+    _imageGREY = frame.mean(axis=2)
+    mean_xaxis = _imageGREY.mean(axis=1)
+    return _grouped_avg(mean_xaxis, slice_freq)
+
+
+def _grouped_avg(myArray: np.array, slice_freq: int = int(ENV.SLICE_FREQ)) -> np.array:
+    N = slice_freq
+    result = np.cumsum(myArray, 0)[N - 1 :: N] / float(N)
+    result[1:] = result[1:] - result[:-1]
+    return result
