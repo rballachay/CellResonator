@@ -13,6 +13,7 @@ import numpy as np
 from src.config import ENV
 from src.extra.tools import check_dir_make
 from src.run.resize import get_downscaled_video
+from src.segment.inference import get_resonator_roi
 
 
 class ResonatorPipeline:
@@ -21,12 +22,7 @@ class ResonatorPipeline:
         video_path: str,
         basis_image: str = ENV.BASIS_IMAGE,
         out_folder: str = None,
-        dims: dict = {
-            "X": int(ENV.X),
-            "Y": int(ENV.Y),
-            "W": int(ENV.W),
-            "H": int(ENV.H),
-        },
+        height: int = int(ENV.H),
         filename: str = ENV.SLICED_FILENAME,
         downsize: bool = False,
         slice_freq: int = int(ENV.SLICE_FREQ),
@@ -40,10 +36,7 @@ class ResonatorPipeline:
         self.out_folder = check_dir_make(out_folder)
 
         self.basis = basis_image
-        self.X = dims["X"]
-        self.Y = dims["Y"]
-        self.W = dims["W"]
-        self.H = dims["H"]
+        self.H = height
         self.filename = filename
         self.slice_freq = slice_freq
 
@@ -67,15 +60,10 @@ class ResonatorPipeline:
         # get the 100 frame for registration and normalization
         frame_100 = self._get_frame_100()
 
-        # change norm to b+w and gaussian blur
-        target_norm, basis_norm = self._norm_transform(
-            frame_100, cv2.imread(self.basis)
-        )
+        rect = get_resonator_roi(frame_100)
 
-        # get homography for registration
-        self._get_homography(target_norm, basis_norm)
-
-        self.X, self.Y, self.W, self.H = self._warp_coordinates()
+        # keep height as a constant
+        self.X, self.Y, self.W, self.H = rect
 
     def _get_frame_100(self) -> np.array:
         # Grab the first frame from our reference photo
@@ -89,78 +77,6 @@ class ResonatorPipeline:
             raise Exception(f"Error reading 10th frame from path {self.video_path}")
 
         return vid
-
-    def _norm_transform(
-        self, image_new: str, image_basis: str
-    ) -> Tuple[np.array, np.array]:
-        # Convert images to grayscale
-        im1Gray = cv2.GaussianBlur(
-            cv2.cvtColor(image_new, cv2.COLOR_BGR2GRAY),
-            ksize=(3, 3),
-            sigmaX=3,
-            sigmaY=3,
-        )
-        im2Gray = cv2.GaussianBlur(
-            cv2.cvtColor(image_basis, cv2.COLOR_RGB2GRAY),
-            ksize=(3, 3),
-            sigmaX=3,
-            sigmaY=3,
-        )
-        return im1Gray, im2Gray
-
-    def _get_homography(self, image_new: np.array, image_basis: np.array):
-        MAX_FEATURES = 2000
-        GOOD_MATCH_PERCENT = 0.5
-
-        # Detect ORB features and compute descriptors.
-        orb = cv2.ORB_create(MAX_FEATURES)
-        keypoints1, descriptors1 = orb.detectAndCompute(image_new, None)
-        keypoints2, descriptors2 = orb.detectAndCompute(image_basis, None)
-
-        # Match features.
-        matcher = cv2.DescriptorMatcher_create(
-            cv2.DESCRIPTOR_MATCHER_BRUTEFORCE_HAMMING
-        )
-        matches = list(matcher.match(descriptors1, descriptors2, None))
-
-        # Sort matches by score
-        matches.sort(key=lambda x: x.distance, reverse=False)
-
-        # Remove not so good matches
-        numGoodMatches = int(len(matches) * GOOD_MATCH_PERCENT)
-        matches = matches[:numGoodMatches]
-
-        # Draw top matches
-        imMatches = cv2.drawMatches(
-            image_new, keypoints1, image_basis, keypoints2, matches, None
-        )
-        cv2.imwrite(f"{self.out_folder}{os.sep}{ENV.MATCHES_FILENAME}", imMatches)
-
-        # Extract location of good matches
-        points1 = np.zeros((len(matches), 2), dtype=np.float32)
-        points2 = np.zeros((len(matches), 2), dtype=np.float32)
-
-        for i, match in enumerate(matches):
-            points1[i, :] = keypoints1[match.queryIdx].pt
-            points2[i, :] = keypoints2[match.trainIdx].pt
-
-        # Find homography
-        self.homography, _ = cv2.findHomography(points1, points2, cv2.RANSAC)
-
-    def _warp_coordinates(self) -> Tuple[int, int, int, int]:
-        # this is the start, or the upper left corner of the mask
-        start = np.matmul(self.homography, np.array((self.Y, self.X, 0)))
-
-        # this is the bottom right corner of the mask
-        end = np.matmul(
-            self.homography, np.array((self.Y + self.H, self.X + self.W, 0))
-        )
-        return (
-            int(start[1]),
-            int(start[0]),
-            int(end[1] - start[1]),
-            int(end[0] - start[0]),
-        )
 
     def _check_crop(self):
         # Check to see if the crop region returns nothing
@@ -203,10 +119,7 @@ class ResonatorPipeline:
 
             # Avoid problems when video finish
             if ret:
-
-                crop_frame = frame[
-                    self.Y : self.Y + self.H, self.X : self.X + self.W, :
-                ]
+                crop_frame = self._get_roi(frame)
                 slices.append(frame_to_slice(crop_frame))
                 out.write(crop_frame)
             else:
@@ -216,6 +129,9 @@ class ResonatorPipeline:
         out.release()
 
         return slices
+
+    def _get_roi(self, img: np.ndarray):
+        return img[self.Y : self.Y + self.H, self.X : self.X + self.W, :]
 
     def _stack_and_save(self, slices: List[np.array]) -> str:
         sliced = np.stack(slices, axis=0)

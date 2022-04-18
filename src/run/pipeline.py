@@ -9,7 +9,7 @@ from src.run.utils import check_results_folder, get_background
 def pipeline(
     inlet: str,
     basis_image: str = ENV.BASIS_IMAGE,
-    dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
+    height: int = int(ENV.H),
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
 ):
@@ -34,7 +34,7 @@ def pipeline(
             total_video_pipeline(
                 data_items,
                 basis_image,
-                dims,
+                height,
                 plot_name,
                 filename,
                 wash_start=wash_start,
@@ -45,7 +45,7 @@ def pipeline(
                 data_items[data_type],
                 data_type,
                 basis_image,
-                dims,
+                height,
                 plot_name,
                 filename,
                 wash_start=wash_start,
@@ -55,7 +55,7 @@ def pipeline(
 def total_video_pipeline(
     data_dict: dict,
     basis_image: str = ENV.BASIS_IMAGE,
-    dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
+    height: int = (ENV.H),
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
     wash_start: float = 0.0,
@@ -79,7 +79,7 @@ def total_video_pipeline(
             _data_dict_tmp,
             title,
             basis_image,
-            dims,
+            height,
             plot_name,
             filename,
             wash_start=wash_start,
@@ -90,7 +90,7 @@ def _run_pipeline(
     data_dict: dict,
     data_type: str,
     basis_image: str = ENV.BASIS_IMAGE,
-    dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
+    height: int = int(ENV.H),
     plot_name: str = ENV.HIST_PLOT,
     filename: str = ENV.SLICED_FILENAME,
     xlsxname: str = ENV.RESULTS_DATA,
@@ -106,7 +106,7 @@ def _run_pipeline(
     rsp = ResonatorPipeline(
         data_dict["video"],
         basis_image=basis_image,
-        dims=dims,
+        height=height,
         filename=f"{data_type}_{filename}",
     )
     path = rsp.run(f"{data_type}_{cropped_vid}")

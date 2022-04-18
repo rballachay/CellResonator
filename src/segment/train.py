@@ -34,21 +34,14 @@ def main(image_path: str, mask_path: str, log_path: str):
     model.summary()
 
     checkpoint = ModelCheckpoint(
-        f"{log_path}/checkpount.txt",
+        f"{log_path}/checkpount",
         monitor="val_accuracy",
         verbose=1,
         save_best_only=True,
         mode="max",
     )
-    csv_logger = CSVLogger(f"{log_path}/csv_logger.txt", separator=",", append=False)
+    csv_logger = CSVLogger(f"{log_path}/csv_logger", separator=",", append=False)
     callbacks_list = [checkpoint, csv_logger]  # early_stopping
-
-    # compile model
-    model.compile(
-        optimizer="adam",
-        loss="binary_crossentropy",
-        metrics=["accuracy", jaccard_index],
-    )
 
     # train and save model
     model.fit(
@@ -60,8 +53,8 @@ def main(image_path: str, mask_path: str, log_path: str):
         callbacks=callbacks_list,
         verbose=1,
     )
-    model.save(log_path)
-    print("model saved:", log_path)
+    model.save(f"{log_path}/model_v1.0.hdf5")
+    print("model saved:", f"log_path")
 
 
 if __name__ == "__main__":

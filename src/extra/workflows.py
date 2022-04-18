@@ -10,7 +10,7 @@ from src.run.utils import get_video
 def workflow1(
     inlet: str,
     basis_image: str = ENV.BASIS_IMAGE,
-    dims: dict = {"X": int(ENV.X), "Y": int(ENV.Y), "W": int(ENV.W), "H": int(ENV.H)},
+    height: int = int(ENV.H),
     filename: str = ENV.SLICED_FILENAME,
     xlsxname: str = ENV.RESULTS_DATA,
     cropped_vid: str = ENV.CROPPED_FILENAME,
@@ -29,7 +29,7 @@ def workflow1(
         rsp = ResonatorPipeline(
             vid,
             basis_image=basis_image,
-            dims=dims,
+            height=height,
             filename=f"{prefix}_{filename}",
         )
         path = rsp.run(f"{prefix}_{cropped_vid}")
