@@ -11,9 +11,16 @@ from src.api.live import analyze_live_video
     help="Source for video feed: 0 for webcam, 1 for usb",
 )
 @click.option(
+    "-o",
+    "output_file",
+    prompt=False,
+    default="MonthDate_Year.mp4",
+    help="Source for video feed: 0 for webcam, 1 for usb",
+)
+@click.option(
     "-c/--nocal",
     "calibrate",
-    default=False,
+    default=True,
     help="Choose to calibrate online or not",
 )
 @click.option(
@@ -23,8 +30,8 @@ from src.api.live import analyze_live_video
     default=1,
     help="Number of frames to average prior to reporting cell loss",
 )
-def main(input_source, calibrate, buffer):
-    analyze_live_video(input_source, calibrate, buffer)
+def main(input_source, output_file, calibrate, buffer):
+    analyze_live_video(input_source, output_file, calibrate, buffer)
 
 
 if __name__ == "__main__":

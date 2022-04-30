@@ -1,5 +1,3 @@
-from typing import Dict
-
 import pandas as pd
 
 
@@ -28,7 +26,7 @@ class ReadExcel:
             try:
                 val = self.NAME_DICT[title]
                 df = pd.read_excel(
-                    xlsx, usecols=val[0], skiprows=val[1], header=val[2]
+                    xlsx, usecols=val[0], skiprows=val[1], header=val[2],engine='openpyxl',
                 ).dropna(axis=0)
 
                 if val[3]:
