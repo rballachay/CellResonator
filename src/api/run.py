@@ -7,8 +7,8 @@ from src.api.live import analyze_live_video
     "-i",
     "input_source",
     prompt=False,
-    default=1,
-    help="Source for video feed: 0 for webcam, 1 for usb",
+    default="1",
+    help="Source for video feed: 0 for webcam, 1 for usb, gopro for gopro",
 )
 @click.option(
     "-o",

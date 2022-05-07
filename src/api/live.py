@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 
 import cv2
 import numpy as np
+from src.api.gopro import gopro_stream
 from src.config import ENV
 from src.core.resonator_pipeline import frame_to_slice
 from src.extra.reset_coords import BoundingBoxWidget
@@ -20,16 +21,18 @@ def analyze_live_video(
     loop, until keyboard exit is pressed, then destroys windows and
     releases video cap.
     """
+    # Get gopro mount if using gopro
+    _clean_input = {"gopro": gopro_stream()}.get(input_source, input_source)
 
     # Get config
     config = _get_config()
 
     # Calibrate ROI if necessary
     if calibrate:
-        config = _calibrate(input_source, config)
+        config = _calibrate(_clean_input, config)
 
     # Create vidcap object with input source
-    vidcap = cv2.VideoCapture(input_source)
+    vidcap = cv2.VideoCapture(_clean_input)
 
     # Create object to write output to
     outwriter = _init_vidwriter(vidcap, output_file)
@@ -82,12 +85,13 @@ def _main_loop(
                 buffer_thread.start()
                 frame_buffer.clear()
 
+
 def _display_frame(frame):
-    """Feed frames to imshow to display video
-    """
+    """Feed frames to imshow to display video"""
     cv2.imshow("OpenCV Live Video Feed", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
         raise KeyboardInterrupt()
+
 
 def _vid_thread(outwriter: cv2.VideoWriter, frame: np.ndarray):
     """Write frame to videowriter object in separate thread"""
