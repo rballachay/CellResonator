@@ -1,18 +1,16 @@
-import datetime
-import threading
-import time
-from typing import Optional, Tuple
+import multiprocessing
+from typing import Optional
 
 import cv2
 import numpy as np
-from src.api.gopro import gopro_stream
+from src.api.utils import GOPRO_HEIGHT, GOPRO_WIDTH, get_brightness
+from src.api.video import VideoAnalyzer, VideoDisplay, VideoWriter
 from src.config import ENV
-from src.core.resonator_pipeline import frame_to_slice
 from src.extra.reset_coords import BoundingBoxWidget
 
 
 def analyze_live_video(
-    input_source: Optional[str],
+    input_source: Optional[int],
     output_file: str,
     calibrate: bool = False,
     buffer: int = 1,
@@ -21,119 +19,37 @@ def analyze_live_video(
     loop, until keyboard exit is pressed, then destroys windows and
     releases video cap.
     """
-    # Get gopro mount if using gopro
-    _clean_input = {"gopro": gopro_stream()}.get(input_source, input_source)
 
     # Get config
     config = _get_config()
 
     # Calibrate ROI if necessary
     if calibrate:
-        config = _calibrate(_clean_input, config)
+        config = _calibrate(input_source, config)
 
-    # Create vidcap object with input source
-    vidcap = cv2.VideoCapture(_clean_input)
-
-    # Create object to write output to
-    outwriter = _init_vidwriter(vidcap, output_file)
-
-    # Release the video camera when interrupted
-    try:
-        _main_loop(vidcap, outwriter, _get_config(), buffer)
-    except KeyboardInterrupt:
-        cv2.destroyAllWindows()
-        vidcap.release()
-        outwriter.release()
+    _run_multiprocess(input_source, output_file, config, buffer)
 
 
-def _main_loop(
-    vidcap: cv2.VideoCapture,
-    outwriter: cv2.VideoWriter,
-    config: Tuple,
-    buffer: int,
-):
-    """Read frames from video, calculate brightness
-    and add to buffer. When buffer is full, report
-    brightness to stdout.
+def _run_multiprocess(input_source: int, output_file: str, config: dict, buffer: int):
+    """The video display, video writing and video analysis are done in three
+    separate processes. This was done to solve problems relating to multi-threading
+    the video writing. Note that each cv2.VideoWriter has to be in a separate process,
+    because it is not serializable.
     """
 
-    # Get time at start of loop
-    start = _current_milli_time()
+    # start the process to display to live output
+    vid_display = multiprocessing.Process(target=VideoDisplay(input_source))
+    vid_display.start()
 
-    frame_buffer = []
-    while True:
-        _success, frame = vidcap.read()
-        if _success:
-            frame_buffer.append(frame)
+    # start the process to write out output video file
+    vid_writing = multiprocessing.Process(target=VideoWriter(input_source, output_file))
+    vid_writing.start()
 
-            # having video writing and imshow in the same thread caused errors
-            vidwrite_thread = threading.Thread(
-                target=_vid_thread, name="VidWriter", args=(outwriter, frame)
-            )
-            vidwrite_thread.start()
-
-            # display video
-            _display_frame(frame)
-
-            if len(frame_buffer) == buffer:
-                # same logic as with video writer thread, added to avoid errors
-                buffer_thread = threading.Thread(
-                    target=_clear_framebuffer,
-                    name="DisplayData",
-                    args=(frame_buffer.copy(), config, start),
-                )
-                buffer_thread.start()
-                frame_buffer.clear()
-
-
-def _display_frame(frame):
-    """Feed frames to imshow to display video"""
-    cv2.imshow("OpenCV Live Video Feed", frame)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        raise KeyboardInterrupt()
-
-
-def _vid_thread(outwriter: cv2.VideoWriter, frame: np.ndarray):
-    """Write frame to videowriter object in separate thread"""
-    outwriter.write(frame)
-
-
-def _clear_framebuffer(frame_buffer: list, config: dict, start: float):
-    """Process frame buffer in separate thread"""
-    _now = (_current_milli_time() - start) / 1000
-    raw, cell = _get_data(frame_buffer, config)
-    print(
-        f"t={_now:.3f}, raw_bri={raw:.3f}, cell_loss={cell:.3f}",
+    # start the process to read in frames, process, and write to terminal
+    vid_analysis = multiprocessing.Process(
+        target=VideoAnalyzer(input_source, config, buffer)
     )
-
-
-def _init_vidwriter(vidcap: cv2.VideoCapture, output_file: str) -> cv2.VideoWriter:
-    """Create object to write to video output using properties
-    from video input.
-    """
-    _output_file = _clean_filename(output_file)
-
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    fps = vidcap.get(cv2.CAP_PROP_FPS)
-    width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    return cv2.VideoWriter(
-        _output_file,
-        fourcc,
-        fps,
-        (width, height),
-    )
-
-
-def _get_data(frame_buffer: list, config: dict) -> Tuple[float, float]:
-    """Calculate brightness and estimated cell count
-    from buffer of frames.
-    """
-    _frame_mean = np.mean(np.stack(frame_buffer, axis=-1), axis=-1)
-    raw = _get_brightness(_frame_mean, config) - config["BRIGHTNESS"]
-    cell = raw * float(config["ALPHA_BRI"]) + float(config["BETA_BRI"])
-    return raw, cell
+    vid_analysis.start()
 
 
 def _calibrate(input_source: Optional[str], config: dict) -> dict:
@@ -149,7 +65,7 @@ def _calibrate(input_source: Optional[str], config: dict) -> dict:
 
     print("Re-calibrating... time will be reset to zero")
     (config["X"], config["Y"], config["W"], config["H"]) = _reset_basis(_frame)
-    config["BRIGHTNESS"] = _get_brightness(_frame, config)
+    config["BRIGHTNESS"] = get_brightness(_frame, config)
     return config
 
 
@@ -158,6 +74,7 @@ def _reset_basis(input_image: np.ndarray):
     bbx_wid = BoundingBoxWidget(input_image)
     while True:
         cv2.imshow("image", bbx_wid.show_image())
+        cv2.resizeWindow("image", GOPRO_WIDTH, GOPRO_HEIGHT)
         key = cv2.waitKey(1)
 
         if key == ord("q"):
@@ -166,31 +83,7 @@ def _reset_basis(input_image: np.ndarray):
             return bbx_wid.coords()
 
 
-def _get_brightness(input_image: np.ndarray, config: Tuple):
-    """Calculate brightness of ROI"""
-    crop_frame = input_image[
-        int(config["Y"]) : int(config["Y"]) + int(config["H"]),
-        int(config["X"]) : int(config["X"]) + int(config["W"]),
-        :,
-    ]
-    _slice = frame_to_slice(crop_frame)
-    top, bottom = int(config["WIN_TOP"]), int(config["WIN_BOTTOM"])
-    return np.mean(_slice[top:bottom])
-
-
-def _current_milli_time():
-    return round(time.time() * 1000)
-
-
 def _get_config():
     config = ENV._asdict()
     config["BRIGHTNESS"] = 0
     return config
-
-
-def _clean_filename(output_file: str):
-    if not output_file == "MonthDate_Year.mp4":
-        return output_file
-
-    mydate = datetime.datetime.now()
-    return mydate.strftime("%B%d_%Y.mp4")
