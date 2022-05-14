@@ -73,6 +73,7 @@ def _reset_basis(input_image: np.ndarray):
     """Reset the basis (coordinates of ROI)."""
     bbx_wid = BoundingBoxWidget(input_image)
     while True:
+        cv2.namedWindow("image", cv2.WINDOW_NORMAL)
         cv2.imshow("image", bbx_wid.show_image())
         cv2.resizeWindow("image", GOPRO_WIDTH, GOPRO_HEIGHT)
         key = cv2.waitKey(1)

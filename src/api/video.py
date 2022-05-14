@@ -25,8 +25,8 @@ class VideoDisplay:
             _success, frame = vidcap.read()
             if _success:
                 """Feed frames to imshow to display video"""
+                cv2.namedWindow("OpenCV Live Video Feed", cv2.WINDOW_NORMAL)
                 cv2.imshow("OpenCV Live Video Feed", frame)
-                cv2.resizeWindow("OpenCV Live Video Feed", GOPRO_WIDTH, GOPRO_HEIGHT)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     raise KeyboardInterrupt()
 
