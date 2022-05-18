@@ -9,6 +9,12 @@ from src.config import ENV
 from src.core.resonator_pipeline import frame_to_slice
 from src.extra.reset_coords import BoundingBoxWidget
 
+# HARD DEFINE CONSTANTS TO BE USED FOR GOPRO CAMERA
+# I AM UNABLE TO GET THE GOPRO FRAME ATTRIBUTES USING OPENCV
+GOPRO_FPS = 30
+GOPRO_WIDTH = 1920
+GOPRO_HEIGHT = 1080
+
 
 def analyze_live_video(
     input_source: Optional[str],
@@ -63,14 +69,11 @@ def _main_loop(
         if _success:
             frame_buffer.append(frame)
 
-            # having video writing and imshow in the same thread caused errors
-            vidwrite_thread = threading.Thread(
-                target=_vid_thread, name="VidWriter", args=(outwriter, frame)
-            )
-            vidwrite_thread.start()
-
             # display video
             _display_frame(frame)
+
+            # having video writing and imshow in the same thread caused errors
+            _vid_thread(outwriter, frame)
 
             if len(frame_buffer) == buffer:
                 # same logic as with video writer thread, added to avoid errors
@@ -82,12 +85,13 @@ def _main_loop(
                 buffer_thread.start()
                 frame_buffer.clear()
 
+
 def _display_frame(frame):
-    """Feed frames to imshow to display video
-    """
+    """Feed frames to imshow to display video"""
     cv2.imshow("OpenCV Live Video Feed", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
         raise KeyboardInterrupt()
+
 
 def _vid_thread(outwriter: cv2.VideoWriter, frame: np.ndarray):
     """Write frame to videowriter object in separate thread"""
@@ -110,15 +114,12 @@ def _init_vidwriter(vidcap: cv2.VideoCapture, output_file: str) -> cv2.VideoWrit
     _output_file = _clean_filename(output_file)
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-    fps = vidcap.get(cv2.CAP_PROP_FPS)
-    width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     return cv2.VideoWriter(
         _output_file,
         fourcc,
-        fps,
-        (width, height),
+        GOPRO_FPS,
+        (GOPRO_WIDTH, GOPRO_HEIGHT),
     )
 
 
@@ -154,11 +155,9 @@ def _reset_basis(input_image: np.ndarray):
     bbx_wid = BoundingBoxWidget(input_image)
     while True:
         cv2.imshow("image", bbx_wid.show_image())
-        key = cv2.waitKey(1)
 
-        if key == ord("q"):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             cv2.destroyAllWindows()
-            cv2.waitKey(1)
             return bbx_wid.coords()
 
 
