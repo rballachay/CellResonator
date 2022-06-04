@@ -21,6 +21,7 @@ def analyze_live_video(
     output_file: str,
     calibrate: bool = False,
     buffer: int = 1,
+    debug: bool = False,
 ):
     """High-level function for analyzing live video feed. Calls main
     loop, until keyboard exit is pressed, then destroys windows and
@@ -38,11 +39,11 @@ def analyze_live_video(
     vidcap = cv2.VideoCapture(input_source)
 
     # Create object to write output to
-    outwriter = _init_vidwriter(vidcap, output_file)
+    outwriter = _init_vidwriter(vidcap, output_file, debug)
 
     # Release the video camera when interrupted
     try:
-        _main_loop(vidcap, outwriter, _get_config(), buffer)
+        _main_loop(vidcap, outwriter, config, buffer)
     except KeyboardInterrupt:
         cv2.destroyAllWindows()
         vidcap.release()
@@ -52,7 +53,7 @@ def analyze_live_video(
 def _main_loop(
     vidcap: cv2.VideoCapture,
     outwriter: cv2.VideoWriter,
-    config: Tuple,
+    config: dict,
     buffer: int,
 ):
     """Read frames from video, calculate brightness
@@ -72,17 +73,11 @@ def _main_loop(
             # display video
             _display_frame(frame)
 
-            # having video writing and imshow in the same thread caused errors
+            # write video
             _vid_thread(outwriter, frame)
 
             if len(frame_buffer) == buffer:
-                # same logic as with video writer thread, added to avoid errors
-                buffer_thread = threading.Thread(
-                    target=_clear_framebuffer,
-                    name="DisplayData",
-                    args=(frame_buffer.copy(), config, start),
-                )
-                buffer_thread.start()
+                _clear_framebuffer(frame_buffer, config, start)
                 frame_buffer.clear()
 
 
@@ -107,7 +102,9 @@ def _clear_framebuffer(frame_buffer: list, config: dict, start: float):
     )
 
 
-def _init_vidwriter(vidcap: cv2.VideoCapture, output_file: str) -> cv2.VideoWriter:
+def _init_vidwriter(
+    vidcap: cv2.VideoCapture, output_file: str, debug: bool
+) -> cv2.VideoWriter:
     """Create object to write to video output using properties
     from video input.
     """
@@ -115,11 +112,21 @@ def _init_vidwriter(vidcap: cv2.VideoCapture, output_file: str) -> cv2.VideoWrit
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
+    # debug session is supposed to be on non-GoPro camera
+    if debug:
+        fps = vidcap.get(cv2.CAP_PROP_FPS)
+        width = int(vidcap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(vidcap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    else:
+        fps = GOPRO_FPS
+        width = GOPRO_WIDTH
+        height = GOPRO_HEIGHT
+
     return cv2.VideoWriter(
         _output_file,
         fourcc,
-        GOPRO_FPS,
-        (GOPRO_WIDTH, GOPRO_HEIGHT),
+        fps,
+        (width, height),
     )
 
 
@@ -128,7 +135,7 @@ def _get_data(frame_buffer: list, config: dict) -> Tuple[float, float]:
     from buffer of frames.
     """
     _frame_mean = np.mean(np.stack(frame_buffer, axis=-1), axis=-1)
-    raw = _get_brightness(_frame_mean, config) - config["BRIGHTNESS"]
+    raw = _get_brightness(_frame_mean, config) - float(config["BRIGHTNESS"])
     cell = raw * float(config["ALPHA_BRI"]) + float(config["BETA_BRI"])
     return raw, cell
 
