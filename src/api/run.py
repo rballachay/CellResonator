@@ -8,7 +8,7 @@ from src.api.live import analyze_live_video
     "input_source",
     prompt=False,
     default=1,
-    help="Source for video feed: 0 for webcam, 1 for usb, gopro for gopro",
+    help="Source for video feed: 0 for webcam, 1 for usb",
 )
 @click.option(
     "-o",
@@ -30,8 +30,14 @@ from src.api.live import analyze_live_video
     default=1,
     help="Number of frames to average prior to reporting cell loss",
 )
-def main(input_source, output_file, calibrate, buffer):
-    analyze_live_video(input_source, output_file, calibrate, buffer)
+@click.option(
+    "--debug",
+    prompt=False,
+    is_flag=True,
+    help="Create debug session with camera other than GoPro",
+)
+def main(input_source, output_file, calibrate, buffer, debug):
+    analyze_live_video(input_source, output_file, calibrate, buffer, debug)
 
 
 if __name__ == "__main__":
