@@ -71,13 +71,22 @@ def _main_loop(
             frame_buffer.append(frame)
 
             # display video
-            _display_frame(frame)
+            _display_frame(frame.copy())
 
-            # write video
-            _vid_thread(outwriter, frame)
+            # having video writing and imshow in the same thread caused errors
+            vidwrite_thread = threading.Thread(
+                target=_vid_thread, name="VidWriter", args=(outwriter, frame.copy())
+            )
+            vidwrite_thread.start()
 
             if len(frame_buffer) == buffer:
-                _clear_framebuffer(frame_buffer, config, start)
+                # same logic as with video writer thread, added to avoid errors
+                buffer_thread = threading.Thread(
+                    target=_clear_framebuffer,
+                    name="DisplayData",
+                    args=(frame_buffer.copy(), config, start),
+                )
+                buffer_thread.start()
                 frame_buffer.clear()
 
 
