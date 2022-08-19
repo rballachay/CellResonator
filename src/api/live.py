@@ -156,7 +156,7 @@ def _calibrate(input_source: Optional[str], config: dict) -> dict:
     vidcap = cv2.VideoCapture(input_source)
 
     # take the fifth frame
-    for _ in range(100):
+    for _ in range(500):
         _, _frame = vidcap.read()
     vidcap.release()
 
